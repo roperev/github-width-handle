@@ -1,0 +1,247 @@
+/*
+ * Width overrides. Only active when the content script marks <html> with
+ * data-gwh-page (an in-scope detail view) and data-gwh-sized (a custom width).
+ * Because these are plain CSS rules, they apply the moment GitHub renders the
+ * container, so there is no visible resize on load.
+ */
+
+/* Outer centered containers: growing max-width widens them equally on both sides. */
+html[data-gwh-sized][data-gwh-page="issue"] [class*="issueViewerContainer"] [class*="contentContainer__"],
+html[data-gwh-sized][data-gwh-page="pr"] #diff-comparison-viewer-container,
+html[data-gwh-sized][data-gwh-page="pr"] #diff-comparison-viewer-container .container-xl,
+html[data-gwh-sized][data-gwh-page="pr-commits"] #diff-comparison-viewer-container,
+html[data-gwh-sized][data-gwh-page="pr-commits"] #diff-comparison-viewer-container .container-xl,
+html[data-gwh-sized][data-gwh-page="discussion"] .new-discussion-timeline {
+  max-width: var(--gwh-width) !important;
+}
+
+/* Inner caps on the PR conversation column. */
+html[data-gwh-sized][data-gwh-page="pr"] #diff-comparison-viewer-container [data-component="SplitPageLayout.Content"],
+html[data-gwh-sized][data-gwh-page="pr"] #diff-comparison-viewer-container [class*="prc-PageLayout-Content-"] {
+  max-width: none !important;
+}
+
+/* Discussions use percentage columns; keep the sidebar fixed so only the main column grows. */
+@media (min-width: 768px) {
+  html[data-gwh-sized][data-gwh-page="discussion"] #discussion_bucket > .col-md-9 {
+    flex: 1 1 0% !important;
+    width: auto !important;
+    max-width: none !important;
+    min-width: 0 !important;
+  }
+
+  html[data-gwh-sized][data-gwh-page="discussion"] #partial-discussion-sidebar {
+    flex: 0 0 var(--gwh-discussion-sidebar, 312px) !important;
+    width: var(--gwh-discussion-sidebar, 312px) !important;
+    max-width: none !important;
+  }
+}
+
+/* Eased width change for widths applied after content is visible, and for resets. */
+html[data-gwh-animate][data-gwh-page="issue"] [class*="issueViewerContainer"] [class*="contentContainer__"],
+html[data-gwh-animate][data-gwh-page="pr"] #diff-comparison-viewer-container,
+html[data-gwh-animate][data-gwh-page="pr-commits"] #diff-comparison-viewer-container,
+html[data-gwh-animate][data-gwh-page="discussion"] .new-discussion-timeline {
+  transition: max-width 0.5s ease !important;
+}
+
+html[data-gwh-dragging],
+html[data-gwh-dragging] * {
+  cursor: col-resize !important;
+  user-select: none !important;
+}
+
+/* ---------- Handle UI ---------- */
+
+.gwh-ui {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 10; /* Below GitHub's sticky headers (11+), so the rail tucks under them. */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  width: 16px;
+  opacity: 1;
+  transition: opacity 0.15s ease;
+}
+
+.gwh-ui[hidden] {
+  display: none;
+}
+
+.gwh-ui.gwh-moving {
+  transition: top 0.18s ease, opacity 0.15s ease;
+}
+
+/* Rail: same blue as GitHub's highlighted comment headers, fading into the page. Gradient set inline by content.js. */
+.gwh-track {
+  --gwh-track-peak: var(--bgColor-accent-muted, #388bfd1a);
+  --gwh-track-end: transparent;
+  position: absolute;
+  left: calc(50% - 2px);
+  z-index: -1;
+  width: 5px;
+  border-radius: 3px;
+  pointer-events: none;
+  opacity: 1;
+  transition: opacity 0.2s ease;
+}
+
+.gwh-track[hidden] {
+  display: none;
+}
+
+.gwh-ui.gwh-moving .gwh-track {
+  opacity: 0;
+  transition: none;
+}
+
+.gwh-handle:hover ~ .gwh-track,
+.gwh-handle:focus-visible ~ .gwh-track,
+html[data-gwh-dragging] .gwh-track {
+  --gwh-track-peak: var(--borderColor-accent-muted, #388bfd66);
+}
+
+.gwh-handle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 40px;
+  padding: 0;
+  cursor: col-resize;
+  touch-action: none;
+  outline: none;
+}
+
+/* Grip of period-sized dots (SVG built in content.js), colored via currentColor. */
+.gwh-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: content-box;
+  min-width: 12px;
+  min-height: 20px;
+  padding: 4px 2px;
+  border-radius: 6px;
+  color: var(--fgColor-muted, #59636e);
+  background-color: transparent;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.gwh-bar svg {
+  display: block;
+  fill: currentColor;
+}
+
+.gwh-handle:hover .gwh-bar,
+.gwh-handle:focus-visible .gwh-bar,
+html[data-gwh-dragging] .gwh-bar {
+  color: var(--fgColor-accent, #0969da);
+  background-color: var(--bgColor-accent-muted, rgba(84, 174, 255, 0.15));
+}
+
+/* Handle style variants (graphics in handles.js). */
+.gwh-bar[data-style="hairline"] {
+  opacity: 0.6;
+}
+
+.gwh-handle:hover .gwh-bar[data-style="hairline"],
+.gwh-handle:focus-visible .gwh-bar[data-style="hairline"],
+html[data-gwh-dragging] .gwh-bar[data-style="hairline"] {
+  opacity: 1;
+}
+
+.gwh-bar.gwh-box {
+  min-width: 0;
+  min-height: 0;
+  padding: 7px 3px;
+  border: 1px solid var(--borderColor-default, #d1d9e0);
+  background-color: var(--bgColor-default, #ffffff);
+  box-shadow: var(--shadow-resting-small, 0 1px 1px rgba(31, 35, 40, 0.04));
+}
+
+.gwh-handle:hover .gwh-bar.gwh-box,
+.gwh-handle:focus-visible .gwh-bar.gwh-box,
+html[data-gwh-dragging] .gwh-bar.gwh-box {
+  border-color: var(--borderColor-accent-emphasis, #0969da);
+  background-color: var(--bgColor-accent-muted, rgba(84, 174, 255, 0.15));
+}
+
+.gwh-handle:focus-visible .gwh-bar {
+  box-shadow: 0 0 0 2px var(--bgColor-default, #fff), 0 0 0 4px var(--focus-outlineColor, #0969da);
+}
+
+.gwh-reset {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  border-radius: 4px;
+  background: none;
+  color: var(--fgColor-muted, #59636e);
+  opacity: 0.45;
+  cursor: pointer;
+  transition: color 0.12s ease, opacity 0.12s ease;
+}
+
+.gwh-reset[hidden] {
+  display: none;
+}
+
+.gwh-reset svg {
+  width: 10px;
+  height: 10px;
+  fill: currentColor;
+}
+
+.gwh-reset:hover,
+.gwh-reset:focus-visible {
+  color: var(--fgColor-danger, #d1242f);
+  opacity: 1;
+  outline: none;
+}
+
+.gwh-reset:focus-visible {
+  box-shadow: 0 0 0 2px var(--focus-outlineColor, #0969da);
+}
+
+/* Primer-style tooltip, shown to the right of the control (clear of the pointer). */
+.gwh-ui [data-gwh-tip] {
+  position: relative;
+}
+
+.gwh-ui [data-gwh-tip]::after {
+  content: attr(data-gwh-tip);
+  position: absolute;
+  top: 50%;
+  left: calc(100% + 12px);
+  transform: translateY(-50%);
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: var(--bgColor-emphasis, #25292e);
+  color: var(--fgColor-onEmphasis, #fff);
+  font: 12px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.1s ease 0s, visibility 0s linear 0.1s;
+}
+
+.gwh-ui [data-gwh-tip]:hover::after,
+.gwh-ui [data-gwh-tip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.1s ease 0.4s, visibility 0s linear 0.4s;
+}
+
+html[data-gwh-dragging] .gwh-ui [data-gwh-tip]::after {
+  display: none;
+}
