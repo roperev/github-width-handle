@@ -63,8 +63,15 @@ html[data-gwh-dragging] * {
   align-items: center;
   gap: 6px;
   width: 16px;
-  opacity: 1;
+  opacity: 0.75;
   transition: opacity 0.15s ease;
+}
+
+/* Dimmed until the rail, handle or reset button is hovered or in use. */
+.gwh-ui:hover,
+.gwh-ui:has(:focus-visible),
+html[data-gwh-dragging] .gwh-ui {
+  opacity: 1;
 }
 
 .gwh-ui[hidden] {
@@ -75,16 +82,16 @@ html[data-gwh-dragging] * {
   transition: top 0.18s ease, opacity 0.15s ease;
 }
 
-/* Rail: same blue as GitHub's highlighted comment headers, fading into the page. Gradient set inline by content.js. */
+/* Rail: fades into the page from the chosen color (default: the blue of GitHub's highlighted
+   comment headers). Gradient set inline by content.js; colors come from the popup settings. */
 .gwh-track {
-  --gwh-track-peak: var(--bgColor-accent-muted, #388bfd1a);
+  --gwh-track-peak: var(--gwh-rail-peak, var(--bgColor-accent-muted, #388bfd1a));
   --gwh-track-end: transparent;
   position: absolute;
   left: calc(50% - 2px);
   z-index: -1;
   width: 5px;
   border-radius: 3px;
-  pointer-events: none;
   opacity: 1;
   transition: opacity 0.2s ease;
 }
@@ -101,7 +108,16 @@ html[data-gwh-dragging] * {
 .gwh-handle:hover ~ .gwh-track,
 .gwh-handle:focus-visible ~ .gwh-track,
 html[data-gwh-dragging] .gwh-track {
-  --gwh-track-peak: var(--borderColor-accent-muted, #388bfd66);
+  --gwh-track-peak: var(--gwh-rail-hover, var(--borderColor-accent-muted, #388bfd66));
+}
+
+html[data-gwh-rail-hidden] .gwh-track {
+  visibility: hidden;
+}
+
+/* Hidden handle: nothing drawn, but the handle stays grabbable and focusable. */
+html[data-gwh-handle-hidden] .gwh-bar {
+  visibility: hidden;
 }
 
 .gwh-handle {
@@ -116,19 +132,25 @@ html[data-gwh-dragging] .gwh-track {
   outline: none;
 }
 
-/* Grip of period-sized dots (SVG built in content.js), colored via currentColor. */
+/* Handle graphic (SVG from handles.js, drawn with currentColor) inside its frame (frames.css). */
+.gwh-ui {
+  --gwh-frame-border: var(--borderColor-default, #d1d9e0);
+  --gwh-frame-bg: var(--bgColor-default, #ffffff);
+  --gwh-frame-fill: var(--bgColor-neutral-muted, #818b981f);
+  --gwh-frame-shadow: var(--shadow-resting-medium, 0 1px 1px rgba(37, 41, 46, 0.1), 0 3px 6px rgba(37, 41, 46, 0.12));
+}
+
+/* Colorized frames take the handle color. */
+html[data-gwh-frame-colored] .gwh-ui {
+  --gwh-frame-border: var(--gwh-handle-fg, var(--fgColor-muted, #59636e));
+  --gwh-frame-bg: color-mix(in srgb, var(--gwh-handle-fg, #59636e) 10%, var(--bgColor-default, #ffffff));
+  --gwh-frame-fill: color-mix(in srgb, var(--gwh-handle-fg, #59636e) 22%, transparent);
+}
+
 .gwh-bar {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-sizing: content-box;
-  min-width: 12px;
-  min-height: 20px;
-  padding: 4px 2px;
-  border-radius: 6px;
-  color: var(--fgColor-muted, #59636e);
+  color: var(--gwh-handle-fg, var(--fgColor-muted, #59636e));
   background-color: transparent;
-  transition: background-color 0.12s ease, color 0.12s ease;
+  transition: background-color 0.12s ease, border-color 0.12s ease, color 0.12s ease;
 }
 
 .gwh-bar svg {
@@ -139,8 +161,8 @@ html[data-gwh-dragging] .gwh-track {
 .gwh-handle:hover .gwh-bar,
 .gwh-handle:focus-visible .gwh-bar,
 html[data-gwh-dragging] .gwh-bar {
-  color: var(--fgColor-accent, #0969da);
-  background-color: var(--bgColor-accent-muted, rgba(84, 174, 255, 0.15));
+  color: var(--gwh-handle-hover, var(--fgColor-accent, #0969da));
+  background-color: var(--gwh-handle-bg, var(--bgColor-accent-muted, rgba(84, 174, 255, 0.15)));
 }
 
 /* Handle style variants (graphics in handles.js). */
@@ -154,20 +176,11 @@ html[data-gwh-dragging] .gwh-bar[data-style="hairline"] {
   opacity: 1;
 }
 
-.gwh-bar.gwh-box {
-  min-width: 0;
-  min-height: 0;
-  padding: 7px 3px;
-  border: 1px solid var(--borderColor-default, #d1d9e0);
-  background-color: var(--bgColor-default, #ffffff);
-  box-shadow: var(--shadow-resting-small, 0 1px 1px rgba(31, 35, 40, 0.04));
-}
-
-.gwh-handle:hover .gwh-bar.gwh-box,
-.gwh-handle:focus-visible .gwh-bar.gwh-box,
-html[data-gwh-dragging] .gwh-bar.gwh-box {
-  border-color: var(--borderColor-accent-emphasis, #0969da);
-  background-color: var(--bgColor-accent-muted, rgba(84, 174, 255, 0.15));
+/* Bordered frames take the handle's hover color. */
+.gwh-handle:hover .gwh-bar:is([data-frame="dashed"], [data-frame="square"], [data-frame="rounded"], [data-frame="pill"], [data-frame="raised"]),
+.gwh-handle:focus-visible .gwh-bar:is([data-frame="dashed"], [data-frame="square"], [data-frame="rounded"], [data-frame="pill"], [data-frame="raised"]),
+html[data-gwh-dragging] .gwh-bar:is([data-frame="dashed"], [data-frame="square"], [data-frame="rounded"], [data-frame="pill"], [data-frame="raised"]) {
+  border-color: var(--gwh-handle-hover, var(--borderColor-accent-emphasis, #0969da));
 }
 
 .gwh-handle:focus-visible .gwh-bar {

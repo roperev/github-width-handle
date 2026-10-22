@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
   "name": "GitHub Width Handle",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Drag to widen the main content column on GitHub issues, pull requests and discussions.",
   "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
       "js": ["src/handles.js", "src/content.js"],
-      "css": ["src/content.css"],
+      "css": ["src/frames.css", "src/content.css"],
       "run_at": "document_start"
     }
   ],

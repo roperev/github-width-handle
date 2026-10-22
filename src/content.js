@@ -2,8 +2,9 @@
   'use strict';
 
   const CACHE_KEY = 'gwh:v1';
-  const HANDLES = globalThis.GWH_HANDLES || [];
-  const DEFAULTS = { enabled: true, width: null, handle: globalThis.GWH_DEFAULT_HANDLE };
+  const { HANDLES, DEFAULTS, normalize, colorVars } = globalThis.GWH;
+  // Positions: middle = always centered in the viewport; top = beside the first comment;
+  // dynamic = beside the first comment, then centered once that scrolls away.
   const ANIM_MS = 500;
   const MOVE_MS = 180;
   const DOCK_TOP = 72; // Below GitHub's sticky headers.
@@ -83,7 +84,7 @@
 
   function writeCache() {
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify({ enabled: state.enabled, width: state.width, handle: state.handle }));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(state));
     } catch {
       /* storage unavailable */
     }
@@ -103,14 +104,6 @@
     chrome.storage.sync.set({ width: state.width }).catch(() => {});
   }
 
-  function normalize(v) {
-    return {
-      enabled: v.enabled !== false,
-      width: Number.isFinite(v.width) && v.width > 0 ? Math.round(v.width) : null,
-      handle: HANDLES.some((h) => h.id === v.handle) ? v.handle : DEFAULTS.handle,
-    };
-  }
-
   // ---------- route + root attributes ----------
 
   function matchPage() {
@@ -125,6 +118,17 @@
   function clearWidthVar() {
     root.style.removeProperty('--gwh-width');
     root.removeAttribute('data-gwh-sized');
+  }
+
+  // Handle and rail colors as root variables (read by content.css), so they apply before paint.
+  function applyColors() {
+    for (const [name, value] of Object.entries(colorVars(state))) {
+      if (value) root.style.setProperty(name, value);
+      else root.style.removeProperty(name);
+    }
+    root.toggleAttribute('data-gwh-handle-hidden', state.handleHidden);
+    root.toggleAttribute('data-gwh-rail-hidden', state.railHidden);
+    root.toggleAttribute('data-gwh-frame-colored', state.frameColored);
   }
 
   function applyRoot() {
@@ -185,9 +189,9 @@
   function renderHandleStyle() {
     if (!bar) return;
     const def = HANDLES.find((h) => h.id === state.handle) || HANDLES.find((h) => h.id === DEFAULTS.handle);
+    bar.dataset.frame = state.frame;
     if (!def || bar.dataset.style === def.id) return;
     bar.dataset.style = def.id;
-    bar.classList.toggle('gwh-box', Boolean(def.box));
     bar.innerHTML = def.svg;
   }
 
@@ -347,7 +351,7 @@
     handle.setAttribute('aria-label', 'Resize content width');
     handle.setAttribute('data-gwh-tip', 'Drag to resize');
     bar = document.createElement('span');
-    bar.className = 'gwh-bar';
+    bar.className = 'gwh-bar gwh-frame';
     renderHandleStyle();
     handle.append(bar);
 
@@ -440,14 +444,19 @@
     const chromeBottom = topChromeBottom([x, root.clientWidth / 2]);
     const dockTop = Math.max(DOCK_TOP, chromeBottom + 8);
 
+    const centered = Math.min(vh / 2 - groupH / 2, containerBottom - groupH);
     let nextDocked;
     let visualTop;
-    if (anchorTop >= dockTop && anchorTop <= vh - groupH - 8) {
+    if (state.position === 'middle') {
+      // Never above the first comment, so it doesn't float beside the page header.
+      nextDocked = true;
+      visualTop = Math.min(Math.max(vh / 2 - groupH / 2, anchorTop, dockTop), Math.min(containerBottom, contentEnd(main)) - groupH);
+    } else if (state.position === 'top' || (anchorTop >= dockTop && anchorTop <= vh - groupH - 8)) {
       nextDocked = false;
       visualTop = anchorTop;
     } else {
       nextDocked = true;
-      visualTop = Math.min(vh / 2 - groupH / 2, containerBottom - groupH);
+      visualTop = centered;
     }
     const visualLeft = Math.round(x - ui.offsetWidth / 2);
 
@@ -601,11 +610,23 @@
   function applyRemote(next) {
     const enabledChanged = next.enabled !== state.enabled;
     const widthChanged = next.width !== state.width;
-    if (next.handle !== state.handle) {
+    if (next.handle !== state.handle || next.frame !== state.frame) {
       state.handle = next.handle;
+      state.frame = next.frame;
       renderHandleStyle();
       writeCache();
       schedule();
+    }
+    if (next.position !== state.position) {
+      state.position = next.position;
+      writeCache();
+      schedule();
+    }
+    const colorKeys = ['frameColored', 'handleColor', 'handleCustom', 'handleHidden', 'railColor', 'railCustom', 'railHidden'];
+    if (colorKeys.some((key) => next[key] !== state[key])) {
+      for (const key of colorKeys) state[key] = next[key];
+      applyColors();
+      writeCache();
     }
     if (!enabledChanged && !widthChanged) return;
 
@@ -637,16 +658,20 @@
     if (!extensionAlive()) return;
     chrome.storage.sync
       .get(DEFAULTS)
-      .then((stored) => applyRemote(normalize(stored)))
+      .then((stored) => {
+        const next = normalize(stored);
+        // Write back settings migrated from older versions (e.g. the v1.0 "Knob" style).
+        if (stored.handle !== next.handle) chrome.storage.sync.set({ handle: next.handle, frame: next.frame }).catch(() => {});
+        applyRemote(next);
+      })
       .catch(() => {});
 
     chrome.storage.onChanged.addListener((changes, area) => {
-      if (area !== 'sync') return;
-      const next = { ...state };
-      if ('enabled' in changes) next.enabled = changes.enabled.newValue !== false;
-      if ('width' in changes) next.width = normalize({ width: changes.width.newValue }).width;
-      if ('handle' in changes) next.handle = normalize({ handle: changes.handle.newValue }).handle;
-      applyRemote(next);
+      // `local.live` carries live previews from the popup's color picker; `sync` the saved settings.
+      const updates = area === 'sync'
+        ? Object.fromEntries(Object.entries(changes).map(([key, { newValue }]) => [key, newValue]))
+        : area === 'local' && changes.live ? changes.live.newValue || {} : null;
+      if (updates) applyRemote(normalize({ ...state, ...updates }));
     });
   }
 
@@ -654,6 +679,7 @@
 
   // Runs at document_start: apply the cached width before GitHub paints anything.
   lastPath = location.pathname;
+  applyColors();
   applyRoot();
   initStorage();
 
@@ -674,7 +700,13 @@
     checkRoute();
     schedule();
   });
-  window.addEventListener('scroll', schedule, { passive: true });
+  // GitHub reveals its sticky header a beat after scrolling; re-measure once things settle.
+  let scrollEndTimer = 0;
+  window.addEventListener('scroll', () => {
+    schedule();
+    clearTimeout(scrollEndTimer);
+    scrollEndTimer = setTimeout(schedule, 150);
+  }, { passive: true });
   window.addEventListener('resize', () => {
     defaultCache.clear();
     schedule();
