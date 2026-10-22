@@ -5,6 +5,7 @@
   --border: #d1d9e0;
   --accent: #0969da;
   --accent-muted: rgba(84, 174, 255, 0.15);
+  --danger: #d65c5c;
   --hover-bg: rgba(129, 139, 152, 0.12);
   --swatch-ring: rgba(31, 35, 40, 0.15);
   --toggle-off: #818b98;
@@ -26,6 +27,7 @@
     --border: #3d444d;
     --accent: #4493f8;
     --accent-muted: rgba(65, 132, 228, 0.15);
+    --danger: #f47c76;
     --hover-bg: rgba(101, 108, 118, 0.2);
     --swatch-ring: rgba(240, 246, 252, 0.2);
     --toggle-off: #656c76;
@@ -75,10 +77,31 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* The title is centered across the full width; the ⓘ button stays on the right. */
 h1 {
+  position: absolute;
+  left: 0;
+  right: 0;
   margin: 0;
   font-size: 13px;
   font-weight: 600;
+  text-align: center;
+  pointer-events: none;
+}
+
+header .info {
+  margin-left: auto;
+}
+
+/* Section headings ("Shape", "Colors"): shown only in the Liquid glass theme. */
+.section-title {
+  display: none;
+  margin: 0;
+  padding: 8px 0 2px;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.5;
+  text-align: center;
 }
 
 .value {
@@ -491,8 +514,17 @@ label {
   align-items: center;
   justify-content: center;
   gap: 8px;
+  position: relative;
   padding-top: 10px;
   border-top: 1px solid var(--border);
+}
+
+.footer .muted {
+  display: none;
+}
+
+.footer #reset-all:not(:disabled) {
+  color: var(--danger);
 }
 
 .footer .link:disabled {
@@ -500,6 +532,59 @@ label {
   opacity: 0.6;
   cursor: default;
   text-decoration: none;
+}
+
+/* Pinned bottom-left so Reset all stays centered. */
+.footer .dice {
+  position: absolute;
+  left: 2px;
+  bottom: 1px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 26px;
+  border-radius: 6px;
+  font-size: 16px;
+  line-height: 1;
+}
+
+.footer .dice:hover,
+.footer .dice:focus-visible {
+  text-decoration: none;
+}
+
+.footer .dice:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.dice .die {
+  display: inline-block;
+  transition: scale 0.2s ease;
+}
+
+/* Zoom in and rattle on hover (or keyboard focus), repeating with a pause, to invite a click. */
+.dice:hover .die,
+.dice:focus-visible .die {
+  scale: 1.25;
+  animation: dice-shake 1.4s ease-in-out infinite;
+}
+
+@keyframes dice-shake {
+  0%, 46%, 100% { transform: none; }
+  6% { transform: translateX(-2px) rotate(-14deg); }
+  14% { transform: translateX(2px) rotate(12deg); }
+  22% { transform: translateX(-2px) rotate(-10deg); }
+  30% { transform: translateX(1px) rotate(8deg); }
+  38% { transform: translateX(-1px) rotate(-4deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dice:hover .die,
+  .dice:focus-visible .die {
+    animation: none;
+  }
 }
 
 /* Custom color: a rainbow ring around the chosen color. */

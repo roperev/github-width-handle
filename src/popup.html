@@ -10,9 +10,9 @@
   </head>
   <body class="loading">
     <header class="row">
-      <h1>Width handle</h1>
+      <h1>GitHub Width Handle</h1>
       <button type="button" class="info" aria-describedby="info-text" aria-controls="info-panel" aria-label="About">
-        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path class="ring" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13Z"/><path d="M6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
       </button>
       <div id="info-panel" class="popover">
         <p id="info-text">
@@ -43,6 +43,7 @@
       <div id="positions" class="segments" role="radiogroup" aria-labelledby="position-label"></div>
     </div>
     </section>
+    <h2 class="section-title">Shape</h2>
     <section class="card">
     <div class="row stack">
       <span id="handle-label">Handle <span id="handle-name" class="muted"></span></span>
@@ -56,6 +57,7 @@
       <div id="frames" class="frames" role="radiogroup" aria-labelledby="frame-label"></div>
     </div>
     </section>
+    <h2 class="section-title">Colors</h2>
     <section class="card">
     <div class="row stack">
       <span class="head">
@@ -84,7 +86,7 @@
       </div>
     </div>
     <footer class="footer">
-      <button type="button" id="randomize" class="link">Randomize!</button>
+      <button type="button" id="randomize" class="link dice" aria-label="Randomize" title="Randomize"><span class="die" aria-hidden="true">🎲</span></button>
       <span class="muted" aria-hidden="true">·</span>
       <button type="button" id="reset-all" class="link" title="Resets style and position settings. Your width is kept.">Reset all to defaults</button>
     </footer>

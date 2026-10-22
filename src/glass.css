@@ -4,6 +4,7 @@
   --fg-muted: rgba(60, 60, 67, 0.62);
   --accent: #0a7aff;
   --accent-muted: rgba(10, 122, 255, 0.14);
+  --danger: #e5534b;
   --switch-on: #34c759;
   --border: rgba(60, 60, 67, 0.14);
   --toggle-off: rgba(120, 120, 128, 0.2);
@@ -31,6 +32,7 @@
     --fg-muted: rgba(235, 235, 245, 0.6);
     --accent: #0a84ff;
     --accent-muted: rgba(10, 132, 255, 0.24);
+    --danger: #ff7b72;
     --switch-on: #30d158;
     --border: rgba(84, 84, 88, 0.5);
     --toggle-off: rgba(120, 120, 128, 0.36);
@@ -57,7 +59,6 @@
    Cards sit on a static gradient and skip the blur: a backdrop-filter would make them the rows'
    offsetParent and throw off the color picker's placement. */
 .glass .segments,
-.glass .segment-option[aria-checked="true"],
 .glass .handle-option,
 .glass .footer .link,
 .glass .info,
@@ -74,9 +75,10 @@
   letter-spacing: -0.08px;
 }
 
+/* Side padding matches the cards, so the title and ⓘ line up with the rows below. */
 .glass header.row {
   min-height: 30px;
-  padding: 0 6px 4px;
+  padding: 0 14px 4px;
 }
 
 .glass h1 {
@@ -93,6 +95,11 @@
   border-radius: 50%;
   background: var(--glass);
   box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+}
+
+/* The glass button is already round, so drop the icon's own ring. */
+.glass .info .ring {
+  display: none;
 }
 
 .glass .popover {
@@ -178,28 +185,66 @@
   transform: translateX(12px);
 }
 
-/* Segmented control: recessed capsule with a floating glass lens. */
+/* Segmented control: recessed capsule with one glass lens that slides to the selected option. */
 .glass .segments {
-  width: 200px;
-  padding: 2px;
+  --seg: 0;
+  position: relative;
+  width: 204px;
+  padding: 3px;
   border: 0;
   border-radius: 999px;
   background: var(--fill);
+  box-shadow: inset 0 0.5px 1.5px rgba(0, 0, 0, 0.08);
+}
+
+.glass .segments:has(> [aria-checked="true"]:nth-child(2)) {
+  --seg: 1;
+}
+
+.glass .segments:has(> [aria-checked="true"]:nth-child(3)) {
+  --seg: 2;
+}
+
+.glass .segments::before {
+  content: "";
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / 3);
+  border-radius: 999px;
+  background: var(--glass-strong);
+  box-shadow: inset 0 1px 0 var(--glass-edge), 0 1px 4px rgba(0, 0, 0, 0.14), 0 0 0 0.5px rgba(0, 0, 0, 0.05);
+  transform: translateX(calc(var(--seg) * 100%));
+  transition: transform 0.3s cubic-bezier(0.3, 1.3, 0.5, 1);
+}
+
+.glass .segments:not(:has([aria-checked="true"]))::before {
+  opacity: 0;
+}
+
+.glass .loading .segments::before {
+  transition: none;
 }
 
 .glass .segment-option {
-  height: 26px;
+  position: relative;
+  height: 20px;
+  padding-top: 1px;
   border-radius: 999px;
-  color: var(--fg);
+  color: var(--fg-muted);
+  font-size: 12.5px;
   font-weight: 500;
-  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass .segment-option:hover {
+  color: var(--fg);
 }
 
 .glass .segment-option[aria-checked="true"] {
-  background: var(--glass-strong);
+  background: none;
   color: var(--fg);
   font-weight: 600;
-  box-shadow: inset 0 1px 0 var(--glass-edge), 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
 }
 
 /* Handle tiles: small glass chips. */
@@ -245,26 +290,68 @@
   border-radius: 2px;
 }
 
-/* Swatches: round, with a ring when selected. */
+/* Swatches: fixed 30px cells spread edge to edge, so the first and last line up with the row
+   text and toggles, and both rows share column centers. Rings sit on ::before with an even gap:
+   a circle around the dots, a capsule around the rail bars. */
 .glass .swatches {
-  gap: 2px;
+  display: flex;
+  justify-content: space-between;
+  gap: 0;
 }
 
-.glass .swatch-option {
-  height: 32px;
+.glass .swatch-option,
+.glass .swatch-option:hover,
+.glass .swatch-option[aria-checked="true"] {
+  position: relative;
+  width: 30px;
+  height: 30px;
   border: 0;
   border-radius: 50%;
-  aspect-ratio: 1;
-  justify-self: center;
+  background: none;
 }
 
-.glass .swatch-option:hover {
+.glass .swatch-option::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  transition: background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.glass .swatch-option:hover::before {
   background: var(--hover-bg);
 }
 
-.glass .swatch-option[aria-checked="true"] {
+.glass .swatch-option[aria-checked="true"]::before {
   background: none;
   box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.glass .swatch-option:focus-visible {
+  outline-offset: 2px;
+}
+
+.glass .swatch-option > * {
+  position: relative;
+}
+
+.glass #rail-colors .swatch-option {
+  height: 32px;
+  border-radius: 0;
+}
+
+.glass #rail-colors .swatch-option::before {
+  inset: 0 5px;
+  border-radius: 10px;
+}
+
+.glass #rail-colors .swatch-option:focus-visible {
+  outline: 0;
+}
+
+.glass #rail-colors .swatch-option:focus-visible::before {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
 }
 
 .glass .swatch.dot {
@@ -316,6 +403,15 @@
 
 .glass .footer .link:active {
   transform: scale(0.96);
+}
+
+.glass .footer #reset-all:not(:disabled) {
+  background: color-mix(in srgb, var(--danger) 10%, var(--glass));
+}
+
+.glass .footer #reset-all:not(:disabled):hover,
+.glass .footer #reset-all:not(:disabled):focus-visible {
+  background: color-mix(in srgb, var(--danger) 16%, var(--glass-strong));
 }
 
 .glass .footer .link:disabled {
@@ -386,7 +482,7 @@
 }
 
 .glass header.row {
-  min-height: 28px;
+  min-height: 26px;
   padding-bottom: 2px;
 }
 
@@ -395,26 +491,22 @@
 }
 
 .glass .row {
-  min-height: 36px;
+  min-height: 34px;
 }
 
 .glass .row.stack {
   gap: 6px;
-  padding: 7px 0 9px;
+  padding: 6px 0 8px;
 }
 
 .glass .handle-option {
-  height: 36px;
+  height: 32px;
 }
 
 .glass .frame-option,
 .glass .frame-option:hover,
 .glass .frame-option[aria-checked="true"] {
-  height: 48px;
-}
-
-.glass .swatch-option {
-  height: 30px;
+  height: 44px;
 }
 
 .glass .footer .link {
@@ -436,4 +528,32 @@
 
 .glass .popover-option {
   border-top-color: var(--border);
+}
+
+/* Section headings sit between the cards, inset to line up with the card text. */
+.glass .section-title {
+  display: block;
+  padding: 0 14px 3px;
+  line-height: 1.3;
+  color: var(--fg-muted);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: -0.1px;
+}
+
+/* Dice: a round glass button beside the wide Reset all capsule. */
+.glass .footer .dice {
+  position: static;
+  flex: 0 0 44px;
+  font-size: 18px;
+}
+
+.glass .footer .dice:hover,
+.glass .footer .dice:focus-visible {
+  background: var(--glass-strong);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 0 0 1.5px color-mix(in srgb, var(--accent) 55%, transparent),
+    0 0 14px color-mix(in srgb, var(--accent) 35%, transparent),
+    var(--glass-shadow);
 }

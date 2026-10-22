@@ -76,7 +76,7 @@ Fifteen randomized combinations of handle graphic, frame, handle color and rail 
   - the handle's vertical position
   - 16 handle graphics and 8 frames to put them in
   - handle and rail colors (8 presets plus a custom color picker), each with a **Hide** switch
-  - **Randomize!**, which picks a random handle, frame, Colorize setting, handle color and rail color (and turns off Hide so the result is visible)
+  - a 🎲 button (Randomize), which picks a random handle, frame, Colorize setting, handle color and rail color (and turns off Hide so the result is visible)
   - **Reset all to defaults**, which resets every style and position setting but keeps your width (use Reset next to the width for that)
   - a **Liquid glass (beta)** switch in the ⓘ panel, which restyles the popup itself with an Apple-style translucent look (it doesn't change the handle on GitHub)
 
