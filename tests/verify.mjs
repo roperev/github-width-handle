@@ -70,7 +70,7 @@ const gutter = await page.evaluate(() => {
   };
 });
 check('issue: grip centered between comment box and sidebar text', near(gutter.dots, gutter.mid, 1), `${gutter.dots} vs ${gutter.mid}`);
-check('issue: handle anchored beside first comment', near(l.ui.top, l.issue.main.top, 2) && l.ui.position === 'absolute');
+check('issue: handle anchored beside first comment, frame top level with it', near(l.bar.top, l.issue.main.top, 2) && l.ui.position === 'absolute', `${l.bar.top} vs ${l.issue.main.top}`);
 const before = l.issue;
 
 await dragHandle(page, 250);
@@ -112,7 +112,7 @@ check('scroll: rail spans viewport below the sticky header, above and below the 
 await page.mouse.wheel(0, -1500);
 await page.waitForTimeout(400);
 l = await layout(page);
-check('scroll back: handle re-anchors to first comment', l.ui.position === 'absolute' && near(l.ui.top, l.issue.main.top, 2));
+check('scroll back: handle re-anchors to first comment', l.ui.position === 'absolute' && near(l.bar.top, l.issue.main.top, 2), `${l.bar.top} vs ${l.issue.main.top}`);
 await page.waitForTimeout(300);
 t = await trackInfo(page);
 check('anchored: rail runs from under the reset to content bottom', t.visible && t.top > l.ui.top && t.bottom >= l.issue.main.bottom - 2, JSON.stringify(t));
@@ -284,14 +284,15 @@ const uiInfo = () => dark.page.evaluate(() => {
   const r = ui.getBoundingClientRect();
   const anchor = document.querySelector('[data-testid="issue-body"]').getBoundingClientRect();
   const comments = document.querySelector('[data-testid="issue-viewer-comments-container"]')?.getBoundingClientRect();
-  return { top: Math.round(r.top), bottom: Math.round(r.bottom), mid: Math.round(r.top + r.height / 2), position: ui.style.position,
+  const barTop = Math.round(document.querySelector('.gwh-bar').getBoundingClientRect().top);
+  return { top: Math.round(r.top), barTop, bottom: Math.round(r.bottom), mid: Math.round(r.top + r.height / 2), position: ui.style.position,
     anchor: Math.round(anchor.top), comments: comments && Math.round(comments.bottom), opacity: getComputedStyle(ui).opacity };
 });
 const dvh = dark.page.viewportSize().height;
 await setStorage(dark.context, dark.extId, { position: 'middle' });
 await open(dark.page, `${REPO}/issues/1`);
 let u = await uiInfo();
-check('middle: pinned at load, never above the first comment', u.position === 'fixed' && u.top >= u.anchor - 1
+check('middle: pinned at load, never above the first comment', u.position === 'fixed' && u.barTop >= u.anchor - 1
   && (u.anchor > dvh / 2 || near(u.mid, dvh / 2, 2)), JSON.stringify(u));
 await dark.page.mouse.wheel(0, 1500);
 await dark.page.waitForTimeout(500);
@@ -322,15 +323,35 @@ await dark.page.waitForTimeout(1200);
 await dark.page.mouse.wheel(0, 1);
 await dark.page.waitForTimeout(300);
 u = await uiInfo();
-check('middle: short issue keeps the handle beside the comments', u.bottom <= u.comments + 1 && u.top >= u.anchor - 1, JSON.stringify(u));
+check('middle: short issue keeps the handle beside the comments', u.bottom <= u.comments + 1 && u.barTop >= u.anchor - 1, JSON.stringify(u));
 
 await setStorage(dark.context, dark.extId, { position: 'top' });
 await open(dark.page, `${REPO}/issues/1`);
 await dark.page.mouse.wheel(0, 1500);
 await dark.page.waitForTimeout(500);
 u = await uiInfo();
-check('top: stays beside the first comment and scrolls away with it', u.position === 'absolute' && near(u.top, u.anchor, 2) && u.bottom < 0, JSON.stringify(u));
-await setStorage(dark.context, dark.extId, { position: 'middle' });
+check('top: stays beside the first comment and scrolls away with it', u.position === 'absolute' && near(u.barTop, u.anchor, 2) && u.bottom < 0, JSON.stringify(u));
+// The visible frame's top lines up with the top of the comment box, whatever the handle/frame height.
+{
+  const aligned = [];
+  for (const [handle, frame] of [['grip-2x4', 'well'], ['pill', 'pill'], ['dots-353', 'none']]) {
+    await setStorage(dark.context, dark.extId, { position: 'top', handle, frame });
+    for (const [url, box] of [[`${REPO}/issues/1`, '[data-testid="issue-body"]'], [`${REPO}/pull/2/commits`, '[data-testid="commit-group-title"] + *']]) {
+      await open(dark.page, url);
+      aligned.push(await dark.page.evaluate((sel) => Math.round(document.querySelector('.gwh-bar').getBoundingClientRect().top
+        - document.querySelector(sel).getBoundingClientRect().top), box));
+    }
+  }
+  check('top: the frame\'s top edge aligns with the comment box for short and tall combos', aligned.every((d) => Math.abs(d) <= 1), JSON.stringify(aligned));
+  await setStorage(dark.context, dark.extId, { handle: 'grip-2x4', frame: 'well' });
+}
+// Back to the default position for the checks below.
+{
+  const p = await dark.context.newPage();
+  await p.goto(`chrome-extension://${dark.extId}/src/popup.html`);
+  await p.evaluate(() => chrome.storage.sync.remove('position'));
+  await p.close();
+}
 
 // ---------- Handle style picker ----------
 const styleOf = () => dark.page.evaluate(() => {
@@ -338,17 +359,39 @@ const styleOf = () => dark.page.evaluate(() => {
   return bar && `${bar.dataset.style}/${bar.dataset.frame}`;
 });
 await open(dark.page, `${REPO}/pull/2`);
-check('handle style: default is dots-353 with no frame', (await styleOf()) === 'dots-353/none');
+check('handle style: default is Grip (2×4) in a Well frame', (await styleOf()) === 'grip-2x4/well');
 const pop = await dark.context.newPage();
 await pop.goto(`chrome-extension://${dark.extId}/src/popup.html`);
 await pop.waitForTimeout(200);
-check('popup: 3 position options, middle selected', (await pop.locator('.segment-option').count()) === 3
-  && (await pop.locator('.segment-option[aria-checked="true"]').getAttribute('data-id')) === 'middle');
+check('popup: 3 position options, dynamic selected', (await pop.locator('.segment-option').count()) === 3
+  && (await pop.locator('.segment-option[aria-checked="true"]').getAttribute('data-id')) === 'dynamic');
 check('popup: 16 handles and 8 frames, defaults selected', (await pop.locator('#handles .handle-option').count()) === 16
   && (await pop.locator('#frames .frame-option').count()) === 8
-  && (await pop.locator('#handles [aria-checked="true"]').getAttribute('data-id')) === 'dots-353'
-  && (await pop.locator('#frames [aria-checked="true"]').getAttribute('data-id')) === 'none');
+  && (await pop.locator('#handles [aria-checked="true"]').getAttribute('data-id')) === 'grip-2x4'
+  && (await pop.locator('#frames [aria-checked="true"]').getAttribute('data-id')) === 'well'
+  && !(await pop.locator('#frame-colored').isChecked()));
 check('popup: fits in Chrome\'s 600px popup limit', (await pop.evaluate(() => document.body.offsetHeight)) <= 600);
+await pop.hover('.info');
+await pop.waitForTimeout(300);
+const glassBox = await pop.locator('.popover-option').boundingBox();
+await pop.mouse.move(glassBox.x + glassBox.width - 16, glassBox.y + glassBox.height / 2, { steps: 6 });
+await pop.locator('#glass').click();
+await pop.waitForTimeout(300);
+check('popup: Liquid glass (beta) toggle in the info panel applies and saves the theme',
+  (await pop.evaluate(() => document.documentElement.classList.contains('glass')))
+  && (await pop.evaluate(() => chrome.storage.sync.get('glass'))).glass === true
+  && (await pop.evaluate(() => document.body.offsetHeight)) <= 600);
+await pop.reload();
+await pop.waitForTimeout(300);
+check('popup: Liquid glass persists across popup opens', await pop.evaluate(() => document.documentElement.classList.contains('glass')));
+await pop.evaluate(() => chrome.storage.sync.set({ handle: 'pill' }));
+await pop.waitForTimeout(200);
+await pop.locator('#reset-all').click();
+await pop.waitForTimeout(300);
+check('popup: Reset all leaves the popup theme alone', (await pop.evaluate(() => chrome.storage.sync.get('glass'))).glass === true);
+await pop.evaluate(() => chrome.storage.sync.set({ glass: false }));
+await pop.waitForTimeout(300);
+check('popup: Liquid glass off restores the standard theme', !(await pop.evaluate(() => document.documentElement.classList.contains('glass'))));
 await pop.locator('#handles [data-id="ridges-4"]').click();
 await pop.locator('#frames [data-id="pill"]').click();
 await dark.page.waitForTimeout(300);
@@ -357,6 +400,18 @@ check('popup: frame previews show the chosen handle',
   (await pop.locator('#frames .gwh-frame').first().innerHTML()) === (await pop.locator('#handles [data-id="ridges-4"] .preview').innerHTML()));
 await open(dark.page, `${REPO}/issues/1`);
 check('handle style: persists across navigation', (await styleOf()) === 'ridges-4/pill');
+const railGap = () => dark.page.evaluate(() => {
+  const bar = document.querySelector('.gwh-bar').getBoundingClientRect();
+  const tracks = [...document.querySelectorAll('.gwh-track')].filter((t) => !t.hidden).map((t) => t.getBoundingClientRect());
+  const above = tracks.find((t) => t.bottom <= bar.top + 1);
+  return above ? Math.round(bar.top - above.bottom) : null;
+});
+await pop.locator('#handles [data-id="pill"]').click();
+await dark.page.waitForTimeout(300);
+const tallGap = await railGap();
+check('frames: tall graphics in Capsule keep at least a 6px gap to the rail', tallGap != null && tallGap >= 6, String(tallGap));
+await pop.locator('#handles [data-id="grip"]').click();
+await dark.page.waitForTimeout(300);
 
 // Handle and rail colors.
 const colorsOf = () => dark.page.evaluate(() => {
@@ -395,14 +450,17 @@ check('popup: Colorize gives the frame the handle color', (await frameBorder()) 
 await pop.locator('#frame-colored').click();
 await dark.page.waitForTimeout(300);
 check('popup: Colorize off restores the gray frame', (await frameBorder()) === plainBorder);
+await pop.evaluate(() => chrome.storage.sync.set({ handleHidden: true, railHidden: true }));
 const beforeRandom = await getStorage(dark.context, dark.extId);
 await pop.locator('#randomize').click();
 await dark.page.waitForTimeout(400);
 const afterRandom = await getStorage(dark.context, dark.extId);
-const randKeys = ['handle', 'frame', 'handleColor', 'railColor'];
-check('popup: Randomize picks a new handle, frame and preset colors and applies them live',
+const randKeys = ['handle', 'frame', 'handleColor', 'railColor', 'frameColored'];
+check('popup: Randomize picks a new handle, frame, Colorize and preset colors, un-hides, and applies them live',
+  typeof afterRandom.frameColored === 'boolean' && !afterRandom.handleHidden && !afterRandom.railHidden &&
   randKeys.some((k) => afterRandom[k] !== beforeRandom[k]) && afterRandom.handleColor !== 'custom' && afterRandom.railColor !== 'custom'
   && (await styleOf()) === `${afterRandom.handle}/${afterRandom.frame}`, JSON.stringify(afterRandom));
+await pop.evaluate(() => chrome.storage.sync.set({ frameColored: false }));
 await pop.evaluate(() => chrome.storage.sync.set({ handleColor: 'green', railColor: 'red' }));
 await pop.locator('#rail-hidden').click();
 await pop.locator('#handle-hidden').click();
@@ -461,8 +519,8 @@ await pop.locator('#reset-all').click();
 await dark.page.waitForTimeout(800);
 const afterReset = await getStorage(dark.context, dark.extId);
 colors = await colorsOf();
-check('popup: Reset all restores every style default, keeps the width, and updates the page', afterReset.width === widthBeforeReset && afterReset.position === 'middle'
-  && afterReset.handle === 'dots-353' && afterReset.frame === 'none' && afterReset.frameColored === false && afterReset.handleColor === 'gray' && afterReset.railColor === 'blue'
+check('popup: Reset all restores every style default, keeps the width, and updates the page', afterReset.width === widthBeforeReset && afterReset.position === 'dynamic'
+  && afterReset.handle === 'grip-2x4' && afterReset.frame === 'well' && afterReset.frameColored === false && afterReset.handleColor === 'gray' && afterReset.railColor === 'blue'
   && !afterReset.handleHidden && !afterReset.railHidden && colors.barVisible && colors.railVisible
   && (await pop.locator('#reset-all').isDisabled()) && Number.isFinite(widthBeforeReset) && (await layout(dark.page)).sized, JSON.stringify(afterReset));
 await pop.close();

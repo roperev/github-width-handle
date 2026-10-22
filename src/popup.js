@@ -11,10 +11,11 @@ const resetEl = $('reset');
 const resetAllEl = $('reset-all');
 const hideToggles = { handleHidden: $('handle-hidden'), railHidden: $('rail-hidden') };
 const frameColoredEl = $('frame-colored');
+const glassEl = $('glass');
 const darkScheme = matchMedia('(prefers-color-scheme: dark)');
 let current = { ...DEFAULTS };
-// "Reset all" covers the look and behavior settings; width has its own Reset.
-const { width: _width, ...STYLE_DEFAULTS } = DEFAULTS;
+// "Reset all" covers the handle's look and behavior; width has its own Reset and the popup theme is left alone.
+const { width: _width, glass: _glass, ...STYLE_DEFAULTS } = DEFAULTS;
 
 // A single-choice picker stored under `key`, with roving focus and arrow-key navigation.
 function radioGroup({ container, nameEl, items, key, className, render, onPick }) {
@@ -277,6 +278,9 @@ const pickers = [
 function render(values) {
   current = values;
   enabledEl.checked = values.enabled;
+  glassEl.checked = values.glass;
+  document.documentElement.classList.toggle('glass', values.glass);
+  localStorage.setItem('gwh-glass', values.glass ? '1' : '0');
   const custom = values.width !== null;
   widthEl.textContent = custom ? `${values.width}px` : 'Default';
   resetEl.hidden = !custom;
@@ -323,18 +327,21 @@ for (const [key, el] of Object.entries(hideToggles)) {
 }
 
 frameColoredEl.addEventListener('change', () => chrome.storage.sync.set({ frameColored: frameColoredEl.checked }));
+glassEl.addEventListener('change', () => chrome.storage.sync.set({ glass: glassEl.checked }));
 darkScheme.addEventListener('change', () => render(current));
 
-// Random handle, frame and preset colors; always a different look from the current one.
+// Random handle, frame, Colorize and preset colors; always a different look from the current one.
+// Hidden handle/rail are always turned back on so the new look is visible.
 const randomOf = (list) => list[Math.floor(Math.random() * list.length)].id;
 $('randomize').addEventListener('click', () => {
   picker.close();
   const presets = (list) => list.filter((c) => !c.custom);
   let next;
   do {
-    next = { handle: randomOf(HANDLES), frame: randomOf(FRAMES), handleColor: randomOf(presets(HANDLE_COLORS)), railColor: randomOf(presets(RAIL_COLORS)) };
+    next = { handle: randomOf(HANDLES), frame: randomOf(FRAMES), handleColor: randomOf(presets(HANDLE_COLORS)), railColor: randomOf(presets(RAIL_COLORS)),
+      frameColored: Math.random() < 0.5 };
   } while (Object.keys(next).every((key) => next[key] === current[key]));
-  chrome.storage.sync.set(next);
+  chrome.storage.sync.set({ ...next, handleHidden: false, railHidden: false });
 });
 
 resetAllEl.addEventListener('click', () => {

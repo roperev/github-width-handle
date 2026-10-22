@@ -69,20 +69,25 @@
     { id: 'rounded', name: 'Rounded' },
     { id: 'pill', name: 'Capsule' },
     { id: 'filled', name: 'Filled' },
-    { id: 'well', name: 'Inset' },
+    { id: 'well', name: 'Well' },
     { id: 'raised', name: 'Raised' },
   ];
 
   // Colors use GitHub's Primer variables so they follow the page theme. `light`/`dark` are the
   // same values as hex, for the popup swatches (the popup has no access to GitHub's CSS).
   // Handle: `fg` at rest, `hover` + `bg` on hover/drag.
+  // Yellow is brighter than Primer's mustard "attention" color; light-dark() follows GitHub's color-scheme.
+  const YELLOW_LIGHT = '#e6b400';
+  const YELLOW_DARK = '#ffd60a';
+  const YELLOW = `light-dark(${YELLOW_LIGHT}, ${YELLOW_DARK})`;
+  const mixIn = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
   const HANDLE_COLORS = [
     { id: 'gray', name: 'Gray', fg: 'var(--fgColor-muted, #59636e)', hover: 'var(--fgColor-accent, #0969da)', bg: 'var(--bgColor-accent-muted, #ddf4ff)', light: '#59636e', dark: '#9198a1' },
     { id: 'white', name: 'White', fg: '#ffffff', hover: '#ffffff', bg: 'var(--bgColor-neutral-muted, #818b981f)', light: '#ffffff', dark: '#ffffff' },
     { id: 'black', name: 'Black', fg: '#000000', hover: '#000000', bg: 'var(--bgColor-neutral-muted, #818b981f)', light: '#000000', dark: '#000000' },
     { id: 'blue', name: 'Blue', fg: 'var(--fgColor-accent, #0969da)', hover: 'var(--fgColor-accent, #0969da)', bg: 'var(--bgColor-accent-muted, #ddf4ff)', light: '#0969da', dark: '#4493f8' },
     { id: 'green', name: 'Green', fg: 'var(--fgColor-success, #1a7f37)', hover: 'var(--fgColor-success, #1a7f37)', bg: 'var(--bgColor-success-muted, #dafbe1)', light: '#1a7f37', dark: '#3fb950' },
-    { id: 'yellow', name: 'Yellow', fg: 'var(--fgColor-attention, #9a6700)', hover: 'var(--fgColor-attention, #9a6700)', bg: 'var(--bgColor-attention-muted, #fff8c5)', light: '#9a6700', dark: '#d29922' },
+    { id: 'yellow', name: 'Yellow', fg: YELLOW, hover: YELLOW, bg: mixIn(YELLOW, 18), light: YELLOW_LIGHT, dark: YELLOW_DARK },
     { id: 'orange', name: 'Orange', fg: 'var(--fgColor-severe, #bc4c00)', hover: 'var(--fgColor-severe, #bc4c00)', bg: 'var(--bgColor-severe-muted, #fff1e5)', light: '#bc4c00', dark: '#db6d28' },
     { id: 'red', name: 'Red', fg: 'var(--fgColor-danger, #d1242f)', hover: 'var(--fgColor-danger, #d1242f)', bg: 'var(--bgColor-danger-muted, #ffebe9)', light: '#d1242f', dark: '#f85149' },
     { id: 'custom', name: 'Custom', custom: true },
@@ -99,7 +104,7 @@
     railColor('black', 'Black', '#000000', '#000000', '#000000'),
     { id: 'blue', name: 'Blue', peak: 'var(--bgColor-accent-muted, #388bfd1a)', hover: 'var(--borderColor-accent-muted, #388bfd66)', light: '#0969da', dark: '#4493f8' },
     railColor('green', 'Green', 'var(--fgColor-success, #1a7f37)', '#1a7f37', '#3fb950'),
-    railColor('yellow', 'Yellow', 'var(--fgColor-attention, #9a6700)', '#9a6700', '#d29922'),
+    railColor('yellow', 'Yellow', YELLOW, YELLOW_LIGHT, YELLOW_DARK),
     railColor('orange', 'Orange', 'var(--fgColor-severe, #bc4c00)', '#bc4c00', '#db6d28'),
     railColor('red', 'Red', 'var(--fgColor-danger, #d1242f)', '#d1242f', '#f85149'),
     { id: 'custom', name: 'Custom', custom: true },
@@ -108,9 +113,9 @@
   const DEFAULTS = {
     enabled: true,
     width: null,
-    position: 'middle',
-    handle: 'dots-353',
-    frame: 'none',
+    position: 'dynamic',
+    handle: 'grip-2x4',
+    frame: 'well',
     frameColored: false,
     handleColor: 'gray',
     handleCustom: '#a371f7ff',
@@ -118,6 +123,7 @@
     railColor: 'blue',
     railCustom: '#a371f740',
     railHidden: false,
+    glass: false,
   };
   const POSITIONS = ['middle', 'top', 'dynamic'];
   const HEX = /^#[0-9a-f]{8}$/;
@@ -149,6 +155,7 @@
       railColor: pick(RAIL_COLORS, v.railColor, DEFAULTS.railColor),
       railCustom: normalizeHex(v.railCustom, DEFAULTS.railCustom),
       railHidden: v.railHidden === true,
+      glass: v.glass === true,
     };
   }
 
