@@ -125,7 +125,8 @@ html[data-gwh-handle-hidden] .gwh-bar {
   align-items: center;
   justify-content: center;
   width: 16px;
-  height: 40px;
+  /* Grows to fit tall graphic + frame combos so the rail gap stays even. */
+  min-height: 40px;
   padding: 0;
   cursor: col-resize;
   touch-action: none;

@@ -61,6 +61,7 @@ export async function layout(page) {
       sized: html.hasAttribute('data-gwh-sized'),
       widthVar: html.style.getPropertyValue('--gwh-width'),
       ui: ui && !ui.hidden ? { ...rect('.gwh-ui'), position: ui.style.position } : null,
+      bar: ui && !ui.hidden ? rect('.gwh-bar') : null,
       reset: !!(ui && !ui.hidden && !ui.querySelector('.gwh-reset').hidden),
       clientWidth: html.clientWidth,
       issue: {

@@ -5,19 +5,28 @@
     <title>GitHub Width Handle</title>
     <link rel="stylesheet" href="frames.css" />
     <link rel="stylesheet" href="popup.css" />
+    <link rel="stylesheet" href="glass.css" />
+    <script src="popup-theme.js"></script>
   </head>
   <body class="loading">
     <header class="row">
       <h1>Width handle</h1>
-      <button type="button" class="info" aria-describedby="info-text" aria-label="About">
+      <button type="button" class="info" aria-describedby="info-text" aria-controls="info-panel" aria-label="About">
         <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8Zm8-6.5a6.5 6.5 0 1 0 0 13 6.5 6.5 0 0 0 0-13ZM6.5 7.75A.75.75 0 0 1 7.25 7h1a.75.75 0 0 1 .75.75v2.75h.25a.75.75 0 0 1 0 1.5h-2a.75.75 0 0 1 0-1.5h.25v-2h-.25a.75.75 0 0 1-.75-.75ZM8 6a1 1 0 1 1 0-2 1 1 0 0 1 0 2Z"/></svg>
       </button>
-      <div id="info-text" class="popover" role="tooltip">
-        Adds a drag handle beside the main column on issue, pull request (Conversation and Commits) and
-        discussion pages. Drag it to widen the column from the center. Your width is saved and synced.
-        Use the × under the handle, or Reset here, to go back to GitHub's default.
+      <div id="info-panel" class="popover">
+        <p id="info-text">
+          Adds a drag handle beside the main column on issue, pull request (Conversation and Commits) and
+          discussion pages. Drag it to widen the column from the center. Your width is saved and synced.
+          Use the × under the handle, or Reset here, to go back to GitHub's default.
+        </p>
+        <label class="popover-option">
+          <span>Liquid glass <span class="beta">Beta</span></span>
+          <input id="glass" type="checkbox" role="switch" class="toggle small" />
+        </label>
       </div>
     </header>
+    <section class="card">
     <div class="row">
       <label for="enabled">Enabled</label>
       <input id="enabled" type="checkbox" role="switch" class="toggle" checked />
@@ -33,6 +42,8 @@
       <span id="position-label">Vertical position</span>
       <div id="positions" class="segments" role="radiogroup" aria-labelledby="position-label"></div>
     </div>
+    </section>
+    <section class="card">
     <div class="row stack">
       <span id="handle-label">Handle <span id="handle-name" class="muted"></span></span>
       <div id="handles" class="handles" role="radiogroup" aria-labelledby="handle-label"></div>
@@ -44,6 +55,8 @@
       </span>
       <div id="frames" class="frames" role="radiogroup" aria-labelledby="frame-label"></div>
     </div>
+    </section>
+    <section class="card">
     <div class="row stack">
       <span class="head">
         <span id="handle-color-label">Handle color <span id="handle-color-name" class="muted"></span></span>
@@ -58,6 +71,7 @@
       </span>
       <div id="rail-colors" class="swatches" role="radiogroup" aria-labelledby="rail-color-label"></div>
     </div>
+    </section>
     <div id="picker" class="picker" role="dialog" aria-label="Custom color" hidden>
       <div class="sv" tabindex="0" aria-label="Saturation and brightness"><span class="sv-thumb"></span></div>
       <input class="hue slider" type="range" min="0" max="360" step="1" aria-label="Hue" />

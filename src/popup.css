@@ -66,6 +66,15 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* Cards only matter in the Liquid glass theme; otherwise rows flow as one list. */
+.card {
+  display: contents;
+}
+
+.card > .row:first-child {
+  border-top: 1px solid var(--border);
+}
+
 h1 {
   margin: 0;
   font-size: 13px;
@@ -132,6 +141,7 @@ button {
   color: var(--tip-fg);
   font-size: 12px;
   line-height: 1.45;
+  cursor: default;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -139,10 +149,47 @@ button {
 }
 
 .info:hover + .popover,
-.info:focus-visible + .popover {
+.info:focus-visible + .popover,
+.popover:hover,
+.popover:focus-within {
   opacity: 1;
   visibility: visible;
+  pointer-events: auto;
   transition: opacity 0.1s ease 0.15s, visibility 0s linear 0.15s;
+}
+
+/* Keeps the panel open while the pointer crosses from the button to the panel. */
+.popover::before {
+  content: "";
+  position: absolute;
+  top: -8px;
+  right: 0;
+  width: 40px;
+  height: 8px;
+}
+
+.popover p {
+  margin: 0;
+}
+
+.popover-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  font-weight: 600;
+}
+
+.beta {
+  margin-left: 4px;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, currentColor 40%, transparent);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 500;
+  vertical-align: 1px;
 }
 
 label {

@@ -1,0 +1,439 @@
+/* Liquid glass (beta) popup theme: layered over popup.css, active when <html> has the "glass" class. */
+:root.glass {
+  --fg: #1d1d1f;
+  --fg-muted: rgba(60, 60, 67, 0.62);
+  --accent: #0a7aff;
+  --accent-muted: rgba(10, 122, 255, 0.14);
+  --switch-on: #34c759;
+  --border: rgba(60, 60, 67, 0.14);
+  --toggle-off: rgba(120, 120, 128, 0.2);
+  --hover-bg: rgba(255, 255, 255, 0.45);
+  --glass: rgba(255, 255, 255, 0.5);
+  --glass-strong: rgba(255, 255, 255, 0.72);
+  --glass-edge: rgba(255, 255, 255, 0.9);
+  --glass-rim: rgba(255, 255, 255, 0.55);
+  --glass-shadow: 0 8px 28px rgba(31, 38, 70, 0.1), 0 1px 3px rgba(31, 38, 70, 0.08);
+  --fill: rgba(120, 120, 128, 0.12);
+  --wall:
+    radial-gradient(60% 45% at 10% 8%, rgba(255, 149, 0, 0.32), transparent 70%),
+    radial-gradient(55% 40% at 95% 20%, rgba(175, 82, 222, 0.28), transparent 70%),
+    radial-gradient(70% 45% at 15% 70%, rgba(48, 176, 199, 0.3), transparent 70%),
+    radial-gradient(60% 50% at 90% 95%, rgba(10, 122, 255, 0.3), transparent 70%),
+    #f2f2f7;
+  --tip-bg: rgba(255, 255, 255, 0.85);
+  --tip-fg: #1d1d1f;
+  --gwh-frame-bg: rgba(255, 255, 255, 0.6);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root.glass {
+    --fg: #f5f5f7;
+    --fg-muted: rgba(235, 235, 245, 0.6);
+    --accent: #0a84ff;
+    --accent-muted: rgba(10, 132, 255, 0.24);
+    --switch-on: #30d158;
+    --border: rgba(84, 84, 88, 0.5);
+    --toggle-off: rgba(120, 120, 128, 0.36);
+    --hover-bg: rgba(255, 255, 255, 0.1);
+    --glass: rgba(44, 44, 50, 0.48);
+    --glass-strong: rgba(80, 80, 88, 0.6);
+    --glass-edge: rgba(255, 255, 255, 0.22);
+    --glass-rim: rgba(255, 255, 255, 0.1);
+    --glass-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 1px 3px rgba(0, 0, 0, 0.4);
+    --fill: rgba(118, 118, 128, 0.24);
+    --wall:
+      radial-gradient(60% 45% at 10% 8%, rgba(255, 159, 10, 0.24), transparent 70%),
+      radial-gradient(55% 40% at 95% 20%, rgba(191, 90, 242, 0.26), transparent 70%),
+      radial-gradient(70% 45% at 15% 70%, rgba(64, 200, 224, 0.2), transparent 70%),
+      radial-gradient(60% 50% at 90% 95%, rgba(10, 132, 255, 0.3), transparent 70%),
+      #000000;
+    --tip-bg: rgba(58, 58, 64, 0.85);
+    --tip-fg: #f5f5f7;
+    --gwh-frame-bg: rgba(255, 255, 255, 0.06);
+  }
+}
+
+/* The glass recipe: translucent tint, blur + saturation, a bright top edge and a soft rim.
+   Cards sit on a static gradient and skip the blur: a backdrop-filter would make them the rows'
+   offsetParent and throw off the color picker's placement. */
+.glass .segments,
+.glass .segment-option[aria-checked="true"],
+.glass .handle-option,
+.glass .footer .link,
+.glass .info,
+.glass .picker,
+.glass .popover {
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  backdrop-filter: blur(20px) saturate(180%);
+}
+
+.glass body {
+  padding: 12px;
+  background: var(--wall);
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", sans-serif;
+  letter-spacing: -0.08px;
+}
+
+.glass header.row {
+  min-height: 30px;
+  padding: 0 6px 4px;
+}
+
+.glass h1 {
+  font-size: 15px;
+  font-weight: 650;
+  letter-spacing: -0.2px;
+}
+
+.glass .info {
+  width: 24px;
+  height: 24px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--glass);
+  box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+}
+
+.glass .popover {
+  top: calc(100% + 4px);
+  padding: 10px 12px;
+  border-radius: 16px;
+  box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+}
+
+.glass .card {
+  display: block;
+  margin-bottom: 10px;
+  padding: 2px 14px;
+  border-radius: 22px;
+  background: var(--glass);
+  box-shadow:
+    inset 0 1px 0 var(--glass-edge),
+    inset 0 -1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 0.5px var(--glass-rim),
+    var(--glass-shadow);
+}
+
+.glass .row {
+  min-height: 40px;
+}
+
+.glass .row + .row {
+  border-top: 0.5px solid var(--border);
+}
+
+.glass .row.stack {
+  gap: 8px;
+  padding: 10px 0 12px;
+}
+
+/* Switches: wide capsule, glossy thumb. */
+.glass .toggle {
+  width: 40px;
+  height: 24px;
+  border-radius: 12px;
+  background: var(--toggle-off);
+  box-shadow: inset 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+.glass .toggle::after {
+  top: 2px;
+  left: 2px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(to bottom, #ffffff, #f4f4f6);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18), 0 0 0 0.5px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s cubic-bezier(0.3, 1.4, 0.5, 1), width 0.15s ease;
+}
+
+.glass .toggle:active::after {
+  width: 26px;
+}
+
+.glass .toggle:checked {
+  background: var(--switch-on);
+}
+
+.glass .toggle:checked::after {
+  transform: translateX(16px);
+}
+
+.glass .toggle:checked:active::after {
+  transform: translateX(10px);
+}
+
+.glass .toggle.small {
+  width: 30px;
+  height: 18px;
+  border-radius: 9px;
+}
+
+.glass .toggle.small::after {
+  width: 14px;
+  height: 14px;
+}
+
+.glass .toggle.small:checked::after {
+  transform: translateX(12px);
+}
+
+/* Segmented control: recessed capsule with a floating glass lens. */
+.glass .segments {
+  width: 200px;
+  padding: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill);
+}
+
+.glass .segment-option {
+  height: 26px;
+  border-radius: 999px;
+  color: var(--fg);
+  font-weight: 500;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.glass .segment-option[aria-checked="true"] {
+  background: var(--glass-strong);
+  color: var(--fg);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--glass-edge), 0 2px 8px rgba(0, 0, 0, 0.12), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+}
+
+/* Handle tiles: small glass chips. */
+.glass .handles {
+  gap: 7px;
+}
+
+.glass .handle-option {
+  height: 42px;
+  border: 0;
+  border-radius: 13px;
+  background: var(--fill);
+  color: var(--fg-muted);
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1);
+}
+
+.glass .handle-option:hover {
+  background: var(--hover-bg);
+}
+
+.glass .handle-option:active {
+  transform: scale(0.94);
+}
+
+.glass .handle-option[aria-checked="true"] {
+  background: var(--accent-muted);
+  color: var(--accent);
+  box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 1.5px var(--accent);
+}
+
+.glass .frame-option,
+.glass .frame-option:hover,
+.glass .frame-option[aria-checked="true"] {
+  height: 54px;
+  background: none;
+  box-shadow: none;
+}
+
+.glass .frame-option[aria-checked="true"]::after {
+  left: 32%;
+  right: 32%;
+  height: 4px;
+  border-radius: 2px;
+}
+
+/* Swatches: round, with a ring when selected. */
+.glass .swatches {
+  gap: 2px;
+}
+
+.glass .swatch-option {
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  aspect-ratio: 1;
+  justify-self: center;
+}
+
+.glass .swatch-option:hover {
+  background: var(--hover-bg);
+}
+
+.glass .swatch-option[aria-checked="true"] {
+  background: none;
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.glass .swatch.dot {
+  width: 20px;
+  height: 20px;
+  box-shadow: inset 0 0 0 0.5px var(--swatch-ring), inset 0 1px 1px rgba(255, 255, 255, 0.45), 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+.glass .swatch.rail {
+  width: 7px;
+  height: 22px;
+  border-radius: 4px;
+}
+
+.glass .swatch.custom.rail {
+  width: 10px;
+  border-radius: 5px;
+}
+
+.glass .custom-fill {
+  width: 11px;
+  height: 11px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+/* Footer: two glass capsule buttons. */
+.glass .footer {
+  gap: 10px;
+  padding: 2px 0 0;
+  border: 0;
+}
+
+.glass .footer .link {
+  flex: 1;
+  height: 34px;
+  border-radius: 999px;
+  background: var(--glass);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 0.5px var(--glass-rim), var(--glass-shadow);
+  transition: transform 0.2s cubic-bezier(0.3, 1.4, 0.5, 1), background-color 0.15s ease;
+}
+
+.glass .footer .link:hover,
+.glass .footer .link:focus-visible {
+  text-decoration: none;
+  background: var(--glass-strong);
+}
+
+.glass .footer .link:active {
+  transform: scale(0.96);
+}
+
+.glass .footer .link:disabled {
+  color: var(--fg-muted);
+  opacity: 0.55;
+}
+
+.glass #reset {
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--accent-muted);
+  font-weight: 600;
+}
+
+.glass #reset:hover {
+  text-decoration: none;
+}
+
+/* Color picker: a floating glass sheet. */
+.glass .picker {
+  left: 16px;
+  right: 16px;
+  padding: 14px;
+  border: 0;
+  border-radius: 26px;
+  background: var(--glass);
+  box-shadow: inset 0 1px 0 var(--glass-edge), inset 0 0 0 0.5px var(--glass-rim), 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+.glass .sv {
+  border-radius: 14px;
+}
+
+.glass .slider {
+  height: 14px;
+  border-radius: 7px;
+}
+
+.glass .slider::-webkit-slider-thumb {
+  width: 22px;
+  height: 22px;
+  border: 0;
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: inset 0 0 0 2.5px #ffffff, 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.glass .picker-preview {
+  border-radius: 50%;
+}
+
+.glass .hex {
+  height: 30px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--fill);
+  padding: 0 12px;
+}
+
+/* Frame previews float on the card with no chip behind them. */
+.glass .frame-option {
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+}
+
+/* Fit Chrome's 600px popup height limit. */
+.glass body {
+  padding: 8px 10px 10px;
+}
+
+.glass header.row {
+  min-height: 28px;
+  padding-bottom: 2px;
+}
+
+.glass .card {
+  margin-bottom: 8px;
+}
+
+.glass .row {
+  min-height: 36px;
+}
+
+.glass .row.stack {
+  gap: 6px;
+  padding: 7px 0 9px;
+}
+
+.glass .handle-option {
+  height: 36px;
+}
+
+.glass .frame-option,
+.glass .frame-option:hover,
+.glass .frame-option[aria-checked="true"] {
+  height: 48px;
+}
+
+.glass .swatch-option {
+  height: 30px;
+}
+
+.glass .footer .link {
+  height: 32px;
+}
+
+/* One list of rows per card, so the first row needs no divider. */
+.glass .card > .row:first-child {
+  border-top: 0;
+}
+
+.glass .footer .muted {
+  display: none;
+}
+
+.glass .popover {
+  background: var(--tip-bg);
+}
+
+.glass .popover-option {
+  border-top-color: var(--border);
+}

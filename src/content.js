@@ -38,7 +38,8 @@
       container: '#diff-comparison-viewer-container',
       main: '[data-testid="commits-list"]',
       side: null,
-      anchor: '[data-testid="commits-list"]',
+      // The first bordered box of commits, below its "Commits on <date>" heading.
+      anchor: '[data-testid="commits-list"] [data-testid="commit-group-title"] + *',
     },
     {
       id: 'discussion',
@@ -439,7 +440,10 @@
     const groupH = ui.offsetHeight;
     const vh = window.innerHeight;
     const anchor = q(page.anchor) || main;
+    // Line up the visible frame (not its taller hit area) with the top of the first comment.
+    const barInset = bar.getBoundingClientRect().top - ui.getBoundingClientRect().top;
     const anchorTop = anchor.getBoundingClientRect().top;
+    const alignedTop = anchorTop - barInset;
     const containerBottom = container.getBoundingClientRect().bottom;
     const chromeBottom = topChromeBottom([x, root.clientWidth / 2]);
     const dockTop = Math.max(DOCK_TOP, chromeBottom + 8);
@@ -450,10 +454,10 @@
     if (state.position === 'middle') {
       // Never above the first comment, so it doesn't float beside the page header.
       nextDocked = true;
-      visualTop = Math.min(Math.max(vh / 2 - groupH / 2, anchorTop, dockTop), Math.min(containerBottom, contentEnd(main)) - groupH);
+      visualTop = Math.min(Math.max(vh / 2 - groupH / 2, alignedTop, dockTop), Math.min(containerBottom, contentEnd(main)) - groupH);
     } else if (state.position === 'top' || (anchorTop >= dockTop && anchorTop <= vh - groupH - 8)) {
       nextDocked = false;
-      visualTop = anchorTop;
+      visualTop = alignedTop;
     } else {
       nextDocked = true;
       visualTop = centered;
