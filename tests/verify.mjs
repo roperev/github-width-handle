@@ -55,7 +55,7 @@ await context.addInitScript(FRAME_LOGGER);
 const DEFAULT = 1280;
 
 // ---------- Issue: default state + drag ----------
-await setStorage(context, extId, { enabled: true, width: null });
+await setStorage(context, extId, { enabled: true, width: null, position: 'dynamic' });
 await open(page, `${REPO}/issues/1`);
 let l = await layout(page);
 check('issue: page detected', l.page === 'issue');
@@ -243,7 +243,7 @@ await context.close();
 
 // ---------- Dark theme screenshot ----------
 const dark = await launch({ headless, colorScheme: 'dark' });
-await setStorage(dark.context, dark.extId, { width: 1800 });
+await setStorage(dark.context, dark.extId, { width: 1800, position: 'dynamic' });
 await open(dark.page, `${REPO}/pull/2`);
 await dark.page.screenshot({ path: `${SHOTS}pr-dark.png` });
 const dl = await layout(dark.page);
@@ -278,21 +278,194 @@ const composerRail = await dark.page.evaluate(() => Math.round(Math.max(...[...d
 check('composer: rail ends at the Comment button, not its padded container', near(composerRail, composer.button - 1, 2) && composerRail < composer.box - 20,
   `rail=${composerRail} button=${composer.button} container=${composer.box}`);
 
+// ---------- Position modes ----------
+const uiInfo = () => dark.page.evaluate(() => {
+  const ui = document.querySelector('.gwh-ui');
+  const r = ui.getBoundingClientRect();
+  const anchor = document.querySelector('[data-testid="issue-body"]').getBoundingClientRect();
+  const comments = document.querySelector('[data-testid="issue-viewer-comments-container"]')?.getBoundingClientRect();
+  return { top: Math.round(r.top), bottom: Math.round(r.bottom), mid: Math.round(r.top + r.height / 2), position: ui.style.position,
+    anchor: Math.round(anchor.top), comments: comments && Math.round(comments.bottom), opacity: getComputedStyle(ui).opacity };
+});
+const dvh = dark.page.viewportSize().height;
+await setStorage(dark.context, dark.extId, { position: 'middle' });
+await open(dark.page, `${REPO}/issues/1`);
+let u = await uiInfo();
+check('middle: pinned at load, never above the first comment', u.position === 'fixed' && u.top >= u.anchor - 1
+  && (u.anchor > dvh / 2 || near(u.mid, dvh / 2, 2)), JSON.stringify(u));
+await dark.page.mouse.wheel(0, 1500);
+await dark.page.waitForTimeout(500);
+u = await uiInfo();
+t = await trackInfo(dark.page);
+check('middle: stays centered while scrolling, rail below the sticky header', u.position === 'fixed' && near(u.mid, dvh / 2, 2)
+  && t.header > 0 && near(t.top, t.header, 1), JSON.stringify({ u, t }));
+
+await dark.page.mouse.move(5, 5);
+await dark.page.waitForTimeout(300);
+const idle = (await uiInfo()).opacity;
+const box2 = await dark.page.locator('.gwh-handle').boundingBox();
+await dark.page.mouse.move(box2.x + box2.width / 2, box2.y + box2.height / 2);
+await dark.page.waitForTimeout(300);
+const hovered = (await uiInfo()).opacity;
+const rail = await dark.page.locator('.gwh-track[data-pos="below"]').boundingBox();
+await dark.page.mouse.move(5, 5);
+await dark.page.waitForTimeout(300);
+await dark.page.mouse.move(rail.x + rail.width / 2, rail.y + 60);
+await dark.page.waitForTimeout(300);
+const railHovered = (await uiInfo()).opacity;
+check('fade: UI at 75% when idle, 100% when the handle or rail is hovered', idle === '0.75' && hovered === '1' && railHovered === '1',
+  `${idle} / ${hovered} / ${railHovered}`);
+await dark.page.mouse.move(5, 5);
+
+await open(dark.page, `${REPO}/issues/5`);
+await dark.page.waitForTimeout(1200);
+await dark.page.mouse.wheel(0, 1);
+await dark.page.waitForTimeout(300);
+u = await uiInfo();
+check('middle: short issue keeps the handle beside the comments', u.bottom <= u.comments + 1 && u.top >= u.anchor - 1, JSON.stringify(u));
+
+await setStorage(dark.context, dark.extId, { position: 'top' });
+await open(dark.page, `${REPO}/issues/1`);
+await dark.page.mouse.wheel(0, 1500);
+await dark.page.waitForTimeout(500);
+u = await uiInfo();
+check('top: stays beside the first comment and scrolls away with it', u.position === 'absolute' && near(u.top, u.anchor, 2) && u.bottom < 0, JSON.stringify(u));
+await setStorage(dark.context, dark.extId, { position: 'middle' });
+
 // ---------- Handle style picker ----------
-const styleOf = () => dark.page.evaluate(() => document.querySelector('.gwh-bar')?.dataset.style);
+const styleOf = () => dark.page.evaluate(() => {
+  const bar = document.querySelector('.gwh-bar');
+  return bar && `${bar.dataset.style}/${bar.dataset.frame}`;
+});
 await open(dark.page, `${REPO}/pull/2`);
-check('handle style: default is dots-353', (await styleOf()) === 'dots-353');
+check('handle style: default is dots-353 with no frame', (await styleOf()) === 'dots-353/none');
 const pop = await dark.context.newPage();
 await pop.goto(`chrome-extension://${dark.extId}/src/popup.html`);
 await pop.waitForTimeout(200);
-check('popup: 12 handle options, default selected', (await pop.locator('.handle-option').count()) === 12
-  && (await pop.locator('.handle-option[aria-checked="true"]').getAttribute('data-id')) === 'dots-353');
-await pop.locator('.handle-option[data-id="knob"]').click();
+check('popup: 3 position options, middle selected', (await pop.locator('.segment-option').count()) === 3
+  && (await pop.locator('.segment-option[aria-checked="true"]').getAttribute('data-id')) === 'middle');
+check('popup: 16 handles and 8 frames, defaults selected', (await pop.locator('#handles .handle-option').count()) === 16
+  && (await pop.locator('#frames .frame-option').count()) === 8
+  && (await pop.locator('#handles [aria-checked="true"]').getAttribute('data-id')) === 'dots-353'
+  && (await pop.locator('#frames [aria-checked="true"]').getAttribute('data-id')) === 'none');
+check('popup: fits in Chrome\'s 600px popup limit', (await pop.evaluate(() => document.body.offsetHeight)) <= 600);
+await pop.locator('#handles [data-id="ridges-4"]').click();
+await pop.locator('#frames [data-id="pill"]').click();
 await dark.page.waitForTimeout(300);
-check('popup: picking a style updates the page live', (await styleOf()) === 'knob');
-await pop.close();
+check('popup: picking a handle and frame updates the page live', (await styleOf()) === 'ridges-4/pill');
+check('popup: frame previews show the chosen handle',
+  (await pop.locator('#frames .gwh-frame').first().innerHTML()) === (await pop.locator('#handles [data-id="ridges-4"] .preview').innerHTML()));
 await open(dark.page, `${REPO}/issues/1`);
-check('handle style: persists across navigation', (await styleOf()) === 'knob');
+check('handle style: persists across navigation', (await styleOf()) === 'ridges-4/pill');
+
+// Handle and rail colors.
+const colorsOf = () => dark.page.evaluate(() => {
+  const track = [...document.querySelectorAll('.gwh-track')].find((t) => !t.hidden);
+  return {
+    bar: getComputedStyle(document.querySelector('.gwh-bar')).color,
+    barVisible: getComputedStyle(document.querySelector('.gwh-bar')).visibility === 'visible',
+    railVisible: !!track && getComputedStyle(track).visibility === 'visible',
+    railImage: track ? getComputedStyle(track).backgroundImage : '',
+  };
+});
+check('popup: 9 handle and 9 rail colors in the same order, defaults gray and blue',
+  (await pop.locator('#handle-colors .swatch-option').count()) === 9
+  && (await pop.locator('#rail-colors .swatch-option').count()) === 9
+  && (await pop.locator('#handle-colors [aria-checked="true"]').getAttribute('data-id')) === 'gray'
+  && (await pop.locator('#rail-colors [aria-checked="true"]').getAttribute('data-id')) === 'blue'
+  && String(await pop.locator('#handle-colors .swatch-option').evaluateAll((b) => b.map((x) => x.dataset.id)))
+    === String(await pop.locator('#rail-colors .swatch-option').evaluateAll((b) => b.map((x) => x.dataset.id))));
+const defaultColors = await colorsOf();
+await pop.locator('#handle-colors [data-id="green"]').click();
+await pop.locator('#rail-colors [data-id="red"]').click();
+await dark.page.waitForTimeout(300);
+let colors = await colorsOf();
+check('popup: picking colors updates the handle and rail live',
+  colors.bar !== defaultColors.bar && colors.bar === 'rgb(63, 185, 80)' && colors.railImage !== defaultColors.railImage,
+  JSON.stringify(colors));
+check('rail: picked colors are bolder (~50%), default Blue stays subtle', /50%/.test(colors.railImage) || /0\.5\)/.test(colors.railImage), colors.railImage);
+const frameBorder = () => dark.page.evaluate(() => getComputedStyle(document.querySelector('.gwh-bar')).borderTopColor);
+await pop.locator('#frames [data-id="square"]').click();
+await dark.page.waitForTimeout(300);
+const plainBorder = await frameBorder();
+await pop.locator('#frame-colored').click();
+await dark.page.waitForTimeout(300);
+check('popup: Colorize gives the frame the handle color', (await frameBorder()) === 'rgb(63, 185, 80)' && plainBorder !== 'rgb(63, 185, 80)'
+  && (await pop.locator('#frames.colored').count()) === 1, `${plainBorder} → ${await frameBorder()}`);
+await pop.locator('#frame-colored').click();
+await dark.page.waitForTimeout(300);
+check('popup: Colorize off restores the gray frame', (await frameBorder()) === plainBorder);
+const beforeRandom = await getStorage(dark.context, dark.extId);
+await pop.locator('#randomize').click();
+await dark.page.waitForTimeout(400);
+const afterRandom = await getStorage(dark.context, dark.extId);
+const randKeys = ['handle', 'frame', 'handleColor', 'railColor'];
+check('popup: Randomize picks a new handle, frame and preset colors and applies them live',
+  randKeys.some((k) => afterRandom[k] !== beforeRandom[k]) && afterRandom.handleColor !== 'custom' && afterRandom.railColor !== 'custom'
+  && (await styleOf()) === `${afterRandom.handle}/${afterRandom.frame}`, JSON.stringify(afterRandom));
+await pop.evaluate(() => chrome.storage.sync.set({ handleColor: 'green', railColor: 'red' }));
+await pop.locator('#rail-hidden').click();
+await pop.locator('#handle-hidden').click();
+await dark.page.waitForTimeout(300);
+colors = await colorsOf();
+check('popup: Hide switches hide the rail and the handle graphic', !colors.railVisible && !colors.barVisible, JSON.stringify(colors));
+const widthBefore = (await layout(dark.page)).issue.container.width;
+await dragHandle(dark.page, 60);
+check('hidden handle: still grabbable', (await layout(dark.page)).issue.container.width > widthBefore);
+await open(dark.page, `${REPO}/pull/2`);
+colors = await colorsOf();
+const firstPaint = await dark.page.evaluate(() => document.documentElement.style.getPropertyValue('--gwh-handle-fg'));
+check('colors: persist across navigation', colors.bar === 'rgb(63, 185, 80)' && !colors.railVisible && !colors.barVisible && /success/.test(firstPaint), firstPaint);
+
+// Custom color picker: live preview while dragging, saved to sync when settled.
+await pop.locator('#handle-hidden').click();
+await pop.locator('#handle-colors [data-id="custom"]').click();
+check('custom: opens the picker', await pop.locator('#picker').isVisible());
+const sv = await pop.locator('.sv').boundingBox();
+await pop.mouse.move(sv.x + 2, sv.y + 2);
+await pop.mouse.down();
+await pop.mouse.move(sv.x + sv.width - 1, sv.y + 1, { steps: 4 });
+await dark.page.waitForTimeout(150);
+const midDrag = (await colorsOf()).bar;
+await pop.mouse.up();
+check('custom: page updates live while dragging', midDrag !== 'rgb(63, 185, 80)', midDrag);
+await pop.locator('.hex').fill('#ff8800');
+await pop.locator('.alpha').fill('50');
+await pop.locator('.alpha').dispatchEvent('change');
+await dark.page.waitForTimeout(500);
+let synced = await getStorage(dark.context, dark.extId);
+check('custom: hex and alpha apply to the page and save', (await colorsOf()).bar === 'rgba(255, 136, 0, 0.5)' && synced.handleCustom === '#ff880080'
+  && synced.handleColor === 'custom', `${(await colorsOf()).bar} ${synced.handleCustom}`);
+await pop.keyboard.press('Escape');
+check('custom: Escape closes the picker', !(await pop.locator('#picker').isVisible()));
+await pop.locator('#rail-hidden').click();
+await pop.locator('#rail-colors [data-id="custom"]').click();
+await pop.locator('.hex').fill('#00ff0080');
+await dark.page.waitForTimeout(100);
+check('custom: a typed hex saves right away (not lost if the popup closes)', (await getStorage(dark.context, dark.extId)).railCustom === '#00ff0080');
+await dark.page.waitForTimeout(400);
+check('custom: rail takes the custom color', /rgba\(0, 255, 0, 0\.5/.test((await colorsOf()).railImage), (await colorsOf()).railImage);
+await pop.locator('.picker-done').click();
+
+// v1.0's "Knob" style migrates to a 2×4 grip in a rounded frame.
+await pop.evaluate(() => chrome.storage.sync.set({ handle: 'knob' }));
+await open(dark.page, `${REPO}/pull/2`);
+await dark.page.waitForTimeout(300);
+synced = await getStorage(dark.context, dark.extId);
+check('migration: Knob becomes Grip (2×4) + Rounded frame', (await styleOf()) === 'grip-2x4/rounded' && synced.handle === 'grip-2x4' && synced.frame === 'rounded',
+  `${await styleOf()} ${JSON.stringify(synced)}`);
+
+check('popup: Reset all is enabled when anything differs from the defaults', !(await pop.locator('#reset-all').isDisabled()));
+const widthBeforeReset = (await getStorage(dark.context, dark.extId)).width;
+await pop.locator('#reset-all').click();
+await dark.page.waitForTimeout(800);
+const afterReset = await getStorage(dark.context, dark.extId);
+colors = await colorsOf();
+check('popup: Reset all restores every style default, keeps the width, and updates the page', afterReset.width === widthBeforeReset && afterReset.position === 'middle'
+  && afterReset.handle === 'dots-353' && afterReset.frame === 'none' && afterReset.frameColored === false && afterReset.handleColor === 'gray' && afterReset.railColor === 'blue'
+  && !afterReset.handleHidden && !afterReset.railHidden && colors.barVisible && colors.railVisible
+  && (await pop.locator('#reset-all').isDisabled()) && Number.isFinite(widthBeforeReset) && (await layout(dark.page)).sized, JSON.stringify(afterReset));
+await pop.close();
 await dark.context.close();
 
 console.log(failures ? `\n${failures} check(s) failed` : '\nAll checks passed');

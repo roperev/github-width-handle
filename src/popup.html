@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <title>GitHub Width Handle</title>
+    <link rel="stylesheet" href="frames.css" />
     <link rel="stylesheet" href="popup.css" />
   </head>
   <body class="loading">
@@ -28,10 +29,51 @@
         <button type="button" id="reset" class="link" hidden>Reset</button>
       </span>
     </div>
+    <div class="row">
+      <span id="position-label">Vertical position</span>
+      <div id="positions" class="segments" role="radiogroup" aria-labelledby="position-label"></div>
+    </div>
     <div class="row stack">
       <span id="handle-label">Handle <span id="handle-name" class="muted"></span></span>
       <div id="handles" class="handles" role="radiogroup" aria-labelledby="handle-label"></div>
     </div>
+    <div class="row stack">
+      <span class="head">
+        <span id="frame-label">Frame <span id="frame-name" class="muted"></span></span>
+        <label class="hide">Colorize <input id="frame-colored" type="checkbox" role="switch" class="toggle small" /></label>
+      </span>
+      <div id="frames" class="frames" role="radiogroup" aria-labelledby="frame-label"></div>
+    </div>
+    <div class="row stack">
+      <span class="head">
+        <span id="handle-color-label">Handle color <span id="handle-color-name" class="muted"></span></span>
+        <label class="hide">Hide <input id="handle-hidden" type="checkbox" role="switch" class="toggle small" /></label>
+      </span>
+      <div id="handle-colors" class="swatches" role="radiogroup" aria-labelledby="handle-color-label"></div>
+    </div>
+    <div class="row stack">
+      <span class="head">
+        <span id="rail-color-label">Rail color <span id="rail-color-name" class="muted"></span></span>
+        <label class="hide">Hide <input id="rail-hidden" type="checkbox" role="switch" class="toggle small" /></label>
+      </span>
+      <div id="rail-colors" class="swatches" role="radiogroup" aria-labelledby="rail-color-label"></div>
+    </div>
+    <div id="picker" class="picker" role="dialog" aria-label="Custom color" hidden>
+      <div class="sv" tabindex="0" aria-label="Saturation and brightness"><span class="sv-thumb"></span></div>
+      <input class="hue slider" type="range" min="0" max="360" step="1" aria-label="Hue" />
+      <input class="alpha slider" type="range" min="0" max="100" step="1" aria-label="Opacity" />
+      <div class="picker-row">
+        <span class="picker-preview"><span></span></span>
+        <input class="hex" type="text" spellcheck="false" maxlength="9" aria-label="Hex color" />
+        <span class="alpha-value"></span>
+        <button type="button" class="link picker-done">Done</button>
+      </div>
+    </div>
+    <footer class="footer">
+      <button type="button" id="randomize" class="link">Randomize!</button>
+      <span class="muted" aria-hidden="true">·</span>
+      <button type="button" id="reset-all" class="link" title="Resets style and position settings. Your width is kept.">Reset all to defaults</button>
+    </footer>
     <script src="handles.js"></script>
     <script src="popup.js"></script>
   </body>
