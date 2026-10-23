@@ -1,8 +1,10 @@
 (() => {
   'use strict';
 
-  const CACHE_KEY = 'gwh:v1';
-  const { HANDLES, DEFAULTS, normalize, colorVars } = globalThis.GWH;
+  // Caches everything in extension storage (global and per-repo settings) for use before first paint.
+  const CACHE_KEY = 'gwh:v2';
+  const LEGACY_CACHE_KEY = 'gwh:v1';
+  const { HANDLES, DEFAULTS, normalize, colorVars, repoOf, repoKey, settingsFor } = globalThis.GWH;
   // Positions: middle = always centered in the viewport; top = beside the first comment;
   // dynamic = beside the first comment, then centered once that scrolls away.
   const ANIM_MS = 500;
@@ -52,7 +54,9 @@
     },
   ];
 
-  let state = readCache();
+  let stored = readCache();
+  let repo = repoOf(location.pathname);
+  let state = settingsFor(stored, repo);
   let page = null;
   let lastPath = null;
   let ui = null;
@@ -77,18 +81,27 @@
 
   function readCache() {
     try {
-      return normalize({ ...DEFAULTS, ...JSON.parse(localStorage.getItem(CACHE_KEY) || '{}') });
+      const cached = localStorage.getItem(CACHE_KEY);
+      if (cached) return JSON.parse(cached) || {};
+      // v1.2 and earlier cached only the global settings.
+      return JSON.parse(localStorage.getItem(LEGACY_CACHE_KEY) || '{}') || {};
     } catch {
-      return { ...DEFAULTS };
+      return {};
     }
   }
 
   function writeCache() {
     try {
-      localStorage.setItem(CACHE_KEY, JSON.stringify(state));
+      localStorage.setItem(CACHE_KEY, JSON.stringify(stored));
     } catch {
       /* storage unavailable */
     }
+  }
+
+  // The storage key edits go to: this repo's own settings if it has them, otherwise global (null).
+  function ownKey() {
+    const key = repoKey(repo);
+    return key && stored[key] ? key : null;
   }
 
   function extensionAlive() {
@@ -100,9 +113,12 @@
   }
 
   function persist() {
+    const key = ownKey();
+    const items = key ? { [key]: { ...stored[key], width: state.width } } : { width: state.width };
+    Object.assign(stored, items);
     writeCache();
     if (!extensionAlive()) return;
-    chrome.storage.sync.set({ width: state.width }).catch(() => {});
+    chrome.storage.sync.set(items).catch(() => {});
   }
 
   // ---------- route + root attributes ----------
@@ -145,6 +161,17 @@
     if (location.pathname === lastPath) return;
     lastPath = location.pathname;
     endCache = null;
+    const nextRepo = repoOf(location.pathname);
+    if (nextRepo !== repo) {
+      repo = nextRepo;
+      const next = settingsFor(stored, repo);
+      // Another repo's width applies as its page is drawn, without animating from the last one.
+      clearTimeout(animTimer);
+      animUntil = 0;
+      root.removeAttribute('data-gwh-animate');
+      state.width = next.width;
+      applyRemote(next);
+    }
     applyRoot();
     schedule();
   }
@@ -661,21 +688,41 @@
   function initStorage() {
     if (!extensionAlive()) return;
     chrome.storage.sync
-      .get(DEFAULTS)
-      .then((stored) => {
-        const next = normalize(stored);
+      .get(null)
+      .then((all) => {
+        stored = all;
         // Write back settings migrated from older versions (e.g. the v1.0 "Knob" style).
-        if (stored.handle !== next.handle) chrome.storage.sync.set({ handle: next.handle, frame: next.frame }).catch(() => {});
-        applyRemote(next);
+        const global = normalize({ ...DEFAULTS, ...all });
+        if ('handle' in all && all.handle !== global.handle) {
+          Object.assign(stored, { handle: global.handle, frame: global.frame });
+          chrome.storage.sync.set({ handle: global.handle, frame: global.frame }).catch(() => {});
+        }
+        applyRemote(settingsFor(stored, repo));
+        writeCache();
       })
       .catch(() => {});
 
     chrome.storage.onChanged.addListener((changes, area) => {
-      // `local.live` carries live previews from the popup's color picker; `sync` the saved settings.
-      const updates = area === 'sync'
-        ? Object.fromEntries(Object.entries(changes).map(([key, { newValue }]) => [key, newValue]))
-        : area === 'local' && changes.live ? changes.live.newValue || {} : null;
-      if (updates) applyRemote(normalize({ ...state, ...updates }));
+      if (area === 'sync') {
+        for (const [key, { newValue }] of Object.entries(changes)) {
+          if (newValue === undefined) delete stored[key];
+          else stored[key] = newValue;
+        }
+        applyRemote(settingsFor(stored, repo));
+        writeCache();
+        return;
+      }
+      // `local.live` carries live previews from the popup's color picker, for global or one repo's settings.
+      const live = area === 'local' && changes.live && changes.live.newValue;
+      if (live && live.values && (live.scope || null) === ownKey()) applyRemote(normalize({ ...state, ...live.values }));
+    });
+
+    // Tells the popup which repo this tab is on.
+    chrome.runtime.onMessage.addListener((message, _sender, reply) => {
+      if (!message || message.type !== 'gwh-repo') return;
+      const current = repoOf(location.pathname);
+      // `label` keeps the URL's capitalization for display.
+      reply({ repo: current, label: current && location.pathname.split('/').filter(Boolean).slice(0, 2).join('/') });
     });
   }
 

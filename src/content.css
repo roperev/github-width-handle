@@ -120,6 +120,36 @@ html[data-gwh-handle-hidden] .gwh-bar {
   visibility: hidden;
 }
 
+/* Stealth mode (handle and rail both hidden): the × is hidden too, so nothing is drawn at rest.
+   Hovering, focusing or dragging the handle reveals the handle, the rail (in the default blue) and the ×. */
+html[data-gwh-handle-hidden][data-gwh-rail-hidden] .gwh-reset {
+  visibility: hidden;
+}
+
+html[data-gwh-handle-hidden][data-gwh-rail-hidden] :is(.gwh-ui:hover, .gwh-ui:has(:focus-visible)) :is(.gwh-reset, .gwh-bar),
+html[data-gwh-handle-hidden][data-gwh-rail-hidden][data-gwh-dragging] :is(.gwh-reset, .gwh-bar) {
+  visibility: visible;
+}
+
+/* The rail stays in place (transparent) so hovering anywhere along it reveals everything,
+   with a hover strip as wide as the handle. */
+html[data-gwh-handle-hidden][data-gwh-rail-hidden] .gwh-track {
+  visibility: visible;
+  opacity: 0;
+}
+
+html[data-gwh-handle-hidden][data-gwh-rail-hidden] .gwh-track::before {
+  content: "";
+  position: absolute;
+  inset: 0 -6px;
+}
+
+html[data-gwh-handle-hidden][data-gwh-rail-hidden] :is(.gwh-ui:hover, .gwh-ui:has(:focus-visible)) .gwh-track,
+html[data-gwh-handle-hidden][data-gwh-rail-hidden][data-gwh-dragging] .gwh-track {
+  --gwh-track-peak: var(--borderColor-accent-muted, #388bfd66);
+  opacity: 1;
+}
+
 .gwh-handle {
   display: flex;
   align-items: center;

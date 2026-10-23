@@ -183,5 +183,35 @@
     };
   }
 
-  globalThis.GWH = { HANDLES, FRAMES, HANDLE_COLORS, RAIL_COLORS, DEFAULTS, POSITIONS, normalize, normalizeHex, colorVars };
+  // ---------- per-repo settings ----------
+  // Global settings are stored as top-level keys. A repo with its own settings has a
+  // `repo:owner/name` entry holding only the values that differ; the rest come from global.
+  const REPO_PREFIX = 'repo:';
+  // The popup theme is always global.
+  const REPO_KEYS = Object.keys(DEFAULTS).filter((key) => key !== 'glass');
+  // First path segments that are GitHub pages, not owners.
+  const NOT_OWNERS = new Set(['about', 'account', 'apps', 'codespaces', 'collections', 'contact', 'copilot', 'dashboard',
+    'enterprise', 'enterprises', 'explore', 'features', 'issues', 'login', 'logout', 'marketplace', 'new', 'notifications',
+    'orgs', 'organizations', 'pricing', 'pulls', 'search', 'security', 'sessions', 'settings', 'signup', 'site',
+    'sponsors', 'stars', 'topics', 'trending', 'users']);
+
+  // "owner/name" (lowercase, as GitHub treats them case-insensitively) or null.
+  function repoOf(pathname) {
+    const [owner, name] = String(pathname || '').split('/').filter(Boolean);
+    if (!owner || !name || NOT_OWNERS.has(owner.toLowerCase())) return null;
+    return `${owner}/${name}`.toLowerCase();
+  }
+
+  const repoKey = (repo) => (repo ? REPO_PREFIX + repo : null);
+
+  // The settings for a repo, from everything in storage (`stored`).
+  function settingsFor(stored, repo) {
+    const global = Object.fromEntries(Object.keys(DEFAULTS).filter((key) => key in stored).map((key) => [key, stored[key]]));
+    const own = (repo && stored[repoKey(repo)]) || {};
+    const overrides = Object.fromEntries(REPO_KEYS.filter((key) => key in own).map((key) => [key, own[key]]));
+    return normalize({ ...DEFAULTS, ...global, ...overrides });
+  }
+
+  globalThis.GWH = { HANDLES, FRAMES, HANDLE_COLORS, RAIL_COLORS, DEFAULTS, POSITIONS, REPO_KEYS, normalize, normalizeHex, colorVars,
+    repoOf, repoKey, settingsFor };
 })();

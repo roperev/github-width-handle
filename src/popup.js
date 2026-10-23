@@ -1,4 +1,4 @@
-const { HANDLES, FRAMES, HANDLE_COLORS, RAIL_COLORS, DEFAULTS, normalize, normalizeHex } = globalThis.GWH;
+const { HANDLES, FRAMES, HANDLE_COLORS, RAIL_COLORS, DEFAULTS, REPO_KEYS, normalizeHex, repoKey, settingsFor } = globalThis.GWH;
 const POSITIONS = [
   { id: 'middle', name: 'Middle', tip: 'Always centered in the window' },
   { id: 'top', name: 'Top', tip: 'Beside the first comment, scrolls with the page' },
@@ -12,14 +12,37 @@ const resetAllEl = $('reset-all');
 const hideToggles = { handleHidden: $('handle-hidden'), railHidden: $('rail-hidden') };
 const frameColoredEl = $('frame-colored');
 const glassEl = $('glass');
+const repoRow = $('repo-row');
+const repoOwnEl = $('repo-own');
 const darkScheme = matchMedia('(prefers-color-scheme: dark)');
 let current = { ...DEFAULTS };
+// Everything in storage: global settings plus `repo:owner/name` entries.
+let stored = {};
+// The current tab's repo ({ repo, label }), or null when it isn't on a GitHub repo.
+let tabRepo = null;
 // "Reset all" covers the handle's look and behavior; width has its own Reset and the popup theme is left alone.
 const { width: _width, glass: _glass, ...STYLE_DEFAULTS } = DEFAULTS;
 
+// Where edits go: the current repo's own settings if it has them, otherwise global (null).
+function target() {
+  const key = tabRepo && repoKey(tabRepo.repo);
+  return key && stored[key] ? key : null;
+}
+
+function save(values) {
+  const key = target();
+  if (!key) return chrome.storage.sync.set(values);
+  const own = { ...stored[key] };
+  const global = {};
+  for (const [name, value] of Object.entries(values)) (REPO_KEYS.includes(name) ? own : global)[name] = value;
+  // Kept locally right away so quick successive edits don't overwrite each other.
+  stored[key] = own;
+  return chrome.storage.sync.set({ ...global, [key]: own });
+}
+
 // A single-choice picker stored under `key`, with roving focus and arrow-key navigation.
 function radioGroup({ container, nameEl, items, key, className, render, onPick }) {
-  const choose = (item) => (onPick ? onPick(item) : chrome.storage.sync.set({ [key]: item.id }));
+  const choose = (item) => (onPick ? onPick(item) : save({ [key]: item.id }));
   const buttons = items.map((item, i) => {
     const btn = document.createElement('button');
     btn.type = 'button';
@@ -35,7 +58,7 @@ function radioGroup({ container, nameEl, items, key, className, render, onPick }
       if (!delta) return;
       e.preventDefault();
       const next = items[(i + delta + items.length) % items.length];
-      if (next.custom) chrome.storage.sync.set({ [key]: next.id });
+      if (next.custom) save({ [key]: next.id });
       else choose(next);
       container.querySelector(`[data-id="${next.id}"]`).focus();
     });
@@ -117,12 +140,12 @@ const picker = (() => {
   // value settles, to stay within its per-minute write limit.
   function commit({ fromHex = false, now = false } = {}) {
     const value = paint({ fromHex });
-    chrome.storage.local.set({ live: { [key]: value } });
+    chrome.storage.local.set({ live: { scope: target(), values: { [key]: value } } });
     clearTimeout(saveTimer);
     saveTimer = 0;
-    const save = () => chrome.storage.sync.set({ [key]: value });
-    if (now) save();
-    else saveTimer = setTimeout(() => { saveTimer = 0; save(); }, 300);
+    const store = () => save({ [key]: value });
+    if (now) store();
+    else saveTimer = setTimeout(() => { saveTimer = 0; store(); }, 300);
   }
 
   function dragSV(e) {
@@ -196,7 +219,7 @@ const picker = (() => {
   function close() {
     if (el.hidden) return;
     clearTimeout(saveTimer);
-    if (key) chrome.storage.sync.set({ [key]: hsvaToHex(hsva) });
+    if (key) save({ [key]: hsvaToHex(hsva) });
     el.hidden = true;
     const focusTo = anchor;
     key = anchor = null;
@@ -220,11 +243,11 @@ function colorPick(colorKey, customKey, containerId) {
   return (item) => {
     if (!item.custom) {
       picker.close();
-      chrome.storage.sync.set({ [colorKey]: item.id });
+      save({ [colorKey]: item.id });
       return;
     }
     if (picker.isOpenFor(customKey)) return picker.close();
-    chrome.storage.sync.set({ [colorKey]: 'custom' });
+    save({ [colorKey]: 'custom' });
     picker.open(customKey, $(containerId).querySelector('[data-id="custom"]'));
   };
 }
@@ -277,6 +300,14 @@ const pickers = [
 
 function render(values) {
   current = values;
+  repoRow.hidden = !tabRepo;
+  if (tabRepo) {
+    repoOwnEl.checked = Boolean(target());
+    $('repo-name').textContent = tabRepo.label.split('/')[1];
+    repoRow.title = repoOwnEl.checked
+      ? `${tabRepo.label} has its own settings. Turn off to use the settings for all repos.`
+      : `Give ${tabRepo.label} its own settings. Other repos keep using the current ones.`;
+  }
   enabledEl.checked = values.enabled;
   glassEl.checked = values.glass;
   document.documentElement.classList.toggle('glass', values.glass);
@@ -307,9 +338,29 @@ function render(values) {
   resetAllEl.disabled = Object.keys(STYLE_DEFAULTS).every((key) => values[key] === STYLE_DEFAULTS[key]);
 }
 
-const load = () => chrome.storage.sync.get(DEFAULTS).then((v) => render(normalize(v)));
+const load = () => chrome.storage.sync.get(null).then((all) => {
+  stored = all;
+  render(settingsFor(stored, tabRepo && tabRepo.repo));
+});
 
-load().then(() => {
+// Asks the content script in the active tab which repo it's on; no reply means it isn't a GitHub page.
+async function detectRepo() {
+  // `?repo=owner/name` stands in for the active tab when the popup is opened as a page (tests, screenshots).
+  const param = new URLSearchParams(location.search).get('repo');
+  if (param) return { repo: param.toLowerCase(), label: param };
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const reply = tab && (await chrome.tabs.sendMessage(tab.id, { type: 'gwh-repo' }));
+    return reply && reply.repo ? reply : null;
+  } catch {
+    return null;
+  }
+}
+
+detectRepo().then((found) => {
+  tabRepo = found;
+  return load();
+}).then(() => {
   // Enable transitions only after the stored state is shown.
   requestAnimationFrame(() => document.body.classList.remove('loading'));
 });
@@ -318,15 +369,23 @@ chrome.storage.onChanged.addListener((changes, area) => {
   if (area === 'sync') load();
 });
 
+repoOwnEl.addEventListener('change', () => {
+  picker.close();
+  const key = repoKey(tabRepo.repo);
+  // Starts with no overrides, so nothing changes until a setting is edited.
+  if (repoOwnEl.checked) chrome.storage.sync.set({ [key]: {} });
+  else chrome.storage.sync.remove(key);
+});
+
 enabledEl.addEventListener('change', () => {
-  chrome.storage.sync.set({ enabled: enabledEl.checked });
+  save({ enabled: enabledEl.checked });
 });
 
 for (const [key, el] of Object.entries(hideToggles)) {
-  el.addEventListener('change', () => chrome.storage.sync.set({ [key]: el.checked }));
+  el.addEventListener('change', () => save({ [key]: el.checked }));
 }
 
-frameColoredEl.addEventListener('change', () => chrome.storage.sync.set({ frameColored: frameColoredEl.checked }));
+frameColoredEl.addEventListener('change', () => save({ frameColored: frameColoredEl.checked }));
 glassEl.addEventListener('change', () => chrome.storage.sync.set({ glass: glassEl.checked }));
 darkScheme.addEventListener('change', () => render(current));
 
@@ -341,14 +400,14 @@ $('randomize').addEventListener('click', () => {
     next = { handle: randomOf(HANDLES), frame: randomOf(FRAMES), handleColor: randomOf(presets(HANDLE_COLORS)), railColor: randomOf(presets(RAIL_COLORS)),
       frameColored: Math.random() < 0.5 };
   } while (Object.keys(next).every((key) => next[key] === current[key]));
-  chrome.storage.sync.set({ ...next, handleHidden: false, railHidden: false });
+  save({ ...next, handleHidden: false, railHidden: false });
 });
 
 resetAllEl.addEventListener('click', () => {
   picker.close();
-  chrome.storage.sync.set(STYLE_DEFAULTS);
+  save(STYLE_DEFAULTS);
 });
 
 resetEl.addEventListener('click', () => {
-  chrome.storage.sync.set({ width: null });
+  save({ width: null });
 });

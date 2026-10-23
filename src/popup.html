@@ -19,6 +19,7 @@
           Adds a drag handle beside the main column on issue, pull request (Conversation and Commits) and
           discussion pages. Drag it to widen the column from the center. Your width is saved and synced.
           Use the × under the handle, or Reset here, to go back to GitHub's default.
+          Turn on "This repo only" to give the current repo its own settings.
         </p>
         <label class="popover-option">
           <span>Liquid glass <span class="beta">Beta</span></span>
@@ -27,6 +28,10 @@
       </div>
     </header>
     <section class="card">
+    <div id="repo-row" class="row" hidden>
+      <label for="repo-own" class="repo-label">This repo only <span id="repo-name" class="muted"></span></label>
+      <input id="repo-own" type="checkbox" role="switch" class="toggle" />
+    </div>
     <div class="row">
       <label for="enabled">Enabled</label>
       <input id="enabled" type="checkbox" role="switch" class="toggle" checked />

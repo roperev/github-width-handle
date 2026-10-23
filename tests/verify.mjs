@@ -1,5 +1,5 @@
 // End-to-end checks for the extension against live github.com pages in the
-// roperev/github-width-handle repo (issue #1, PR #2, discussion #3).
+// roperev/github-width-handle repo (issue #1, PR #2, discussion #3), plus cli/cli issue #2 as a second repo.
 // Run: npm test   (set HEADED=1 to watch)
 import { launch, open, layout, setStorage, getStorage, dragHandle, REPO } from './helpers.mjs';
 import fs from 'node:fs';
@@ -195,7 +195,7 @@ check('reset: back to default, reset hidden, storage cleared', l.issue.container
 
 // ---------- Late apply (cache stale vs storage.sync) animates ----------
 await setStorage(context, extId, { width: 1700 });
-await page.evaluate(() => localStorage.setItem('gwh:v1', JSON.stringify({ enabled: true, width: null })));
+await page.evaluate(() => localStorage.setItem('gwh:v2', JSON.stringify({ enabled: true, width: null })));
 await open(page, `${REPO}/issues/1`);
 f = await frames(page);
 const uniq = [...new Set(f)];
@@ -220,6 +220,116 @@ await page.waitForTimeout(800);
 l = await layout(page);
 check('popup reset: page returns to default', !l.sized && l.issue.container.width === DEFAULT);
 await popup.close();
+
+// ---------- Per-repo settings ----------
+const OWN = 'repo:roperev/github-width-handle';
+const OTHER = 'https://github.com/cli/cli/issues/2';
+const widthOn = async (p) => (await layout(p)).issue.container.width;
+await setStorage(context, extId, { width: 1500, handle: 'grip-2x4', [OWN]: { width: 1800 } });
+await open(page, `${REPO}/issues/1`);
+check('repo: own width applies on its pages', (await widthOn(page)) === 1800, `${await widthOn(page)}`);
+const other = await context.newPage();
+await open(other, OTHER);
+check('repo: other repos use the global width', (await widthOn(other)) === 1500, `${await widthOn(other)}`);
+
+const repoReply = await page.evaluate(() => document.documentElement.getAttribute('data-gwh-page'));
+const rpop = await context.newPage();
+await rpop.goto(`chrome-extension://${extId}/src/popup.html`);
+const replies = await rpop.evaluate(async () => {
+  const tabs = await chrome.tabs.query({});
+  return (await Promise.all(tabs.map((t) => chrome.tabs.sendMessage(t.id, { type: 'gwh-repo' }).catch(() => null)))).filter(Boolean);
+});
+check('repo: content script tells the popup its repo', repoReply === 'issue' && replies.some((r) => r.repo === 'roperev/github-width-handle' && r.label === 'roperev/github-width-handle')
+  && replies.some((r) => r.repo === 'cli/cli'), JSON.stringify(replies));
+check('repo: popup on a non-GitHub tab hides the repo switch and edits global', await rpop.locator('#repo-row').isHidden());
+await rpop.goto(`chrome-extension://${extId}/src/popup.html?repo=roperev/github-width-handle`);
+check('repo: popup shows the repo switch on, with the repo width', (await rpop.locator('#repo-own').isChecked()) && (await rpop.locator('#width').textContent()) === '1800px'
+  && (await rpop.locator('#repo-name').textContent()) === 'github-width-handle');
+
+// Edits go to the repo's own entry only.
+await rpop.locator('#handles [data-id="dash"]').click();
+await page.waitForTimeout(500);
+let st = await getStorage(context, extId);
+check('repo: popup edits save to the repo, not global', st[OWN].handle === 'dash' && st[OWN].width === 1800 && st.handle === 'grip-2x4', JSON.stringify(st));
+check('repo: the edit applies on the repo page only', (await page.locator('.gwh-bar').getAttribute('data-style')) === 'dash'
+  && (await other.locator('.gwh-bar').getAttribute('data-style')) === 'grip-2x4');
+
+// Dragging on a repo page saves to that repo.
+await dragHandle(page, -100);
+st = await getStorage(context, extId);
+check('repo: dragging saves to the repo width', st[OWN].width === 1600 && st.width === 1500, JSON.stringify(st));
+
+// Turning the switch off goes back to global settings, live.
+await rpop.locator('#repo-own').click();
+await page.waitForTimeout(900);
+st = await getStorage(context, extId);
+check('repo: switch off removes the repo settings and the page goes back to global', !(OWN in st) && (await widthOn(page)) === 1500
+  && (await page.locator('.gwh-bar').getAttribute('data-style')) === 'grip-2x4' && (await rpop.locator('#width').textContent()) === '1500px', JSON.stringify(st));
+
+// Turning it on starts from the current settings, then diverges.
+await rpop.locator('#repo-own').click();
+await page.waitForTimeout(300);
+st = await getStorage(context, extId);
+check('repo: switch on starts with no overrides', JSON.stringify(st[OWN]) === '{}' && (await widthOn(page)) === 1500, JSON.stringify(st[OWN]));
+await rpop.locator('#reset').click();
+await page.waitForTimeout(900);
+st = await getStorage(context, extId);
+check('repo: width Reset in repo mode sets this repo to the default width only', st[OWN].width === null && st.width === 1500
+  && (await widthOn(page)) === DEFAULT && (await widthOn(other)) === 1500, JSON.stringify(st));
+
+// Reload: the repo width is cached for first paint.
+await page.evaluate(() => { window.__gwhFrames.length = 0; });
+await setStorage(context, extId, { [OWN]: { width: 1900 } });
+await open(page, `${REPO}/issues/1`);
+f = await frames(page);
+check('repo: reload paints the repo width from the start', f.length > 0 && f.every((w) => w === 1900), `first=${f[0]} last=${f.at(-1)}`);
+await rpop.close();
+await other.close();
+const cleanup = await context.newPage();
+await cleanup.goto(`chrome-extension://${extId}/src/popup.html`);
+await cleanup.evaluate((k) => chrome.storage.sync.remove(k), OWN);
+await cleanup.close();
+
+// ---------- Stealth mode: handle and rail both hidden ----------
+await setStorage(context, extId, { width: 1500, handleHidden: true, railHidden: true, railColor: 'orange' });
+await open(page, `${REPO}/issues/1`);
+await page.mouse.move(5, 5);
+await page.waitForTimeout(300);
+const stealth = () => page.evaluate(() => {
+  const vis = (sel) => getComputedStyle(document.querySelector(sel)).visibility;
+  const track = getComputedStyle(document.querySelector('.gwh-track:not([hidden])'));
+  const shown = track.visibility === 'visible' && track.opacity === '1' ? 'visible' : 'hidden';
+  return { reset: vis('.gwh-reset'), bar: vis('.gwh-bar'), track: shown, peak: track.getPropertyValue('--gwh-track-peak').trim() };
+});
+let stv = await stealth();
+check('stealth: nothing drawn at rest (handle, rail and ×)', stv.reset === 'hidden' && stv.bar === 'hidden' && stv.track === 'hidden', JSON.stringify(stv));
+const sbox = await page.locator('.gwh-handle').boundingBox();
+await page.mouse.move(sbox.x + sbox.width / 2, sbox.y + sbox.height / 2);
+await page.waitForTimeout(300);
+stv = await stealth();
+check('stealth: hover shows the handle, the × and the rail in the default blue', stv.reset === 'visible' && stv.track === 'visible' && stv.bar === 'visible' && !/bc4c00|db6d28/.test(stv.peak), JSON.stringify(stv));
+// Hovering anywhere along the (invisible) rail, a few px off center, also reveals everything.
+await page.mouse.move(5, 5);
+await page.waitForTimeout(400);
+const railBox = await page.evaluate(() => {
+  // A point on the rail inside the window, well away from the handle.
+  const r = document.querySelector('.gwh-track:not([hidden])').getBoundingClientRect();
+  const top = Math.max(r.top, 0);
+  const bottom = Math.min(r.bottom, innerHeight);
+  const handle = document.querySelector('.gwh-handle').getBoundingClientRect();
+  const y = handle.top - top > bottom - handle.bottom ? top + (handle.top - top) / 2 : handle.bottom + (bottom - handle.bottom) / 2;
+  return { x: r.left + r.width / 2, y, top, bottom };
+});
+await page.mouse.move(railBox.x + 5, railBox.y);
+await page.waitForTimeout(400);
+stv = await stealth();
+check('stealth: hovering anywhere along the rail reveals the handle, rail and ×', stv.reset === 'visible' && stv.track === 'visible' && stv.bar === 'visible', JSON.stringify({ ...stv, railBox }));
+await setStorage(context, extId, { railHidden: false });
+await page.mouse.move(5, 5);
+await page.waitForTimeout(300);
+stv = await stealth();
+check('stealth: only the handle hidden keeps the × and rail visible', stv.reset === 'visible' && stv.track === 'visible', JSON.stringify(stv));
+await setStorage(context, extId, { handleHidden: false, railHidden: false, railColor: 'blue' });
 
 // ---------- Drag smoothness on long PR ----------
 await open(page, `${REPO}/pull/2`);
@@ -419,7 +529,7 @@ const colorsOf = () => dark.page.evaluate(() => {
   return {
     bar: getComputedStyle(document.querySelector('.gwh-bar')).color,
     barVisible: getComputedStyle(document.querySelector('.gwh-bar')).visibility === 'visible',
-    railVisible: !!track && getComputedStyle(track).visibility === 'visible',
+    railVisible: !!track && getComputedStyle(track).visibility === 'visible' && getComputedStyle(track).opacity !== '0',
     railImage: track ? getComputedStyle(track).backgroundImage : '',
   };
 });
