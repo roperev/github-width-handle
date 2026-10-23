@@ -478,16 +478,16 @@
 
 /* Fit Chrome's 600px popup height limit. */
 .glass body {
-  padding: 8px 10px 10px;
+  padding: 6px 10px 8px;
 }
 
 .glass header.row {
-  min-height: 26px;
+  min-height: 24px;
   padding-bottom: 2px;
 }
 
 .glass .card {
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .glass .row {
@@ -496,11 +496,11 @@
 
 .glass .row.stack {
   gap: 6px;
-  padding: 6px 0 8px;
+  padding: 5px 0 7px;
 }
 
 .glass .handle-option {
-  height: 32px;
+  height: 30px;
 }
 
 .glass .frame-option,
@@ -514,7 +514,8 @@
 }
 
 /* One list of rows per card, so the first row needs no divider. */
-.glass .card > .row:first-child {
+.glass .card > .row:first-child,
+.glass #repo-row[hidden] + .row {
   border-top: 0;
 }
 
@@ -530,15 +531,9 @@
   border-top-color: var(--border);
 }
 
-/* Section headings sit between the cards, inset to line up with the card text. */
-.glass .section-title {
-  display: block;
-  padding: 0 14px 3px;
-  line-height: 1.3;
-  color: var(--fg-muted);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.1px;
+/* A little extra air between cards, where the section headings used to sit. */
+.glass .card + .card {
+  margin-top: 12px;
 }
 
 /* Dice: a round glass button beside the wide Reset all capsule. */

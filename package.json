@@ -1,6 +1,6 @@
 {
   "name": "github-width-handle",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "private": true,
   "description": "Chrome extension that adds a drag handle to resize the main content column on GitHub issue, pull request and discussion pages.",
   "type": "module",

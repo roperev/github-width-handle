@@ -68,6 +68,22 @@ body {
   border-top: 1px solid var(--border);
 }
 
+/* "This repo only" shows only when the current tab is on a repo. */
+#repo-row[hidden] {
+  display: none;
+}
+
+#repo-row[hidden] + .row {
+  border-top: 0;
+}
+
+.repo-label {
+  min-width: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
 /* Cards only matter in the Liquid glass theme; otherwise rows flow as one list. */
 .card {
   display: contents;
@@ -91,17 +107,6 @@ h1 {
 
 header .info {
   margin-left: auto;
-}
-
-/* Section headings ("Shape", "Colors"): shown only in the Liquid glass theme. */
-.section-title {
-  display: none;
-  margin: 0;
-  padding: 8px 0 2px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.5;
-  text-align: center;
 }
 
 .value {
@@ -746,4 +751,72 @@ label {
   color: var(--fg-muted);
   font-variant-numeric: tabular-nums;
   text-align: right;
+}
+
+/* Classic polish: a soft page gradient, fading dividers and a little depth on the controls.
+   Scoped away from the Liquid glass theme, which has its own recipe. */
+:root {
+  --bg-end: #f6f8fa;
+  --tile-sheen: rgba(31, 35, 40, 0.03);
+  --knob-shadow: 0 1px 2px rgba(31, 35, 40, 0.25);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-end: #151b23;
+    --tile-sheen: rgba(240, 246, 252, 0.035);
+    --knob-shadow: 0 1px 2px rgba(1, 4, 9, 0.6);
+  }
+}
+
+:root:not(.glass) body {
+  background:
+    radial-gradient(70% 56px at 50% 0, color-mix(in srgb, var(--accent) 9%, transparent), transparent),
+    linear-gradient(180deg, var(--bg) 30%, var(--bg-end));
+}
+
+:root:not(.glass) .row + .row,
+:root:not(.glass) .card > .row:first-child,
+:root:not(.glass) .footer {
+  border-image: linear-gradient(90deg, transparent, var(--border) 12%, var(--border) 88%, transparent) 1;
+}
+
+:root:not(.glass) .toggle {
+  background-image: linear-gradient(180deg, rgba(0, 0, 0, 0.12), transparent 60%);
+}
+
+:root:not(.glass) .toggle:checked {
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.22), transparent);
+}
+
+:root:not(.glass) .toggle::after {
+  box-shadow: var(--knob-shadow);
+}
+
+:root:not(.glass) .handle-option {
+  background: linear-gradient(180deg, var(--tile-sheen), transparent);
+}
+
+:root:not(.glass) .handle-option:hover {
+  border-color: color-mix(in srgb, var(--fg-muted) 55%, var(--border));
+}
+
+:root:not(.glass) .frame-option {
+  background: none;
+}
+
+:root:not(.glass) .handle-option[aria-checked="true"]:not(.frame-option),
+:root:not(.glass) .swatch-option[aria-checked="true"],
+:root:not(.glass) .segment-option[aria-checked="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent) 8%, transparent));
+  box-shadow: 0 1px 6px color-mix(in srgb, var(--accent) 22%, transparent);
+}
+
+:root:not(.glass) .segments {
+  background: linear-gradient(180deg, var(--tile-sheen), transparent);
+}
+
+:root:not(.glass) .frame-option[aria-checked="true"]::after {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 60%, transparent), var(--accent), color-mix(in srgb, var(--accent) 60%, transparent));
+  box-shadow: 0 0 4px color-mix(in srgb, var(--accent) 50%, transparent);
 }

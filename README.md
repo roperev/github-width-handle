@@ -24,11 +24,12 @@ As you scroll, the handle stays at the middle of the window.
 
 ### Settings popup
 
-The popup follows your system's light or dark setting.
+The popup follows your system's light or dark setting. Shown on a repo page, with the **This repo only** switch, in the classic theme and in the Liquid glass (beta) theme.
 
 | Light | Dark |
 | --- | --- |
 | ![Settings popup, light theme](docs/popup-light.png) | ![Settings popup, dark theme](docs/popup-dark.png) |
+| ![Settings popup, Liquid glass, light theme](docs/popup-glass-light.png) | ![Settings popup, Liquid glass, dark theme](docs/popup-glass-dark.png) |
 
 ### Color combinations
 
@@ -69,9 +70,10 @@ Fifteen randomized combinations of handle graphic, frame, handle color and rail 
 - Where the handle sits is your choice (see [Vertical position](#vertical-position)). By default it starts beside the first comment, then follows the vertical center of the window as you scroll, so it's always reachable.
 - The handle, × and rail are dimmed to 75% opacity until you hover or use them.
 - A small **×** under the handle (shown only when a custom width is set) eases back to GitHub's default width.
-- The width is **global** and **synced** (`chrome.storage.sync`). It's applied before the page paints, so there's no snap on load or when moving between pages. If it can only be applied after the content is visible, it eases in over 0.5s.
+- The width and style are **synced** (`chrome.storage.sync`) and shared by every repo, unless you give a repo its own settings (see [Per-repo settings](#per-repo-settings)). The width is applied before the page paints, so there's no snap on load or when moving between pages. If it can only be applied after the content is visible, it eases in over 0.5s.
 - Keyboard: focus the handle and use <kbd>←</kbd> / <kbd>→</kbd> (hold <kbd>Shift</kbd> for bigger steps).
 - The toolbar popup has:
+  - a **This repo only** switch, shown when the current tab is on a repo
   - an on/off toggle, the current width and Reset
   - the handle's vertical position
   - 16 handle graphics and 8 frames to put them in
@@ -81,6 +83,15 @@ Fifteen randomized combinations of handle graphic, frame, handle color and rail 
   - a **Liquid glass (beta)** switch in the ⓘ panel, which restyles the popup itself with an Apple-style translucent look (it doesn't change the handle on GitHub)
 
   Changes apply live and are synced.
+
+### Per-repo settings
+
+When the popup is opened on a repo's page, a **This repo only** switch appears with the repo's name. Turn it on to give that repo its own settings. For example, one work repo can have a wider column and a different handle while every other repo keeps your usual setup.
+
+- A repo with its own settings starts out matching the shared settings. Only the settings you change for it are stored, so anything you haven't changed still follows the shared settings.
+- While the switch is on, everything in the popup (except the Liquid glass theme) and dragging the handle on that repo's pages change only that repo.
+- Turn the switch off to remove the repo's own settings and go back to the shared ones.
+- Repos are matched by owner and name, so all issues, PRs and discussions in a repo share its settings.
 
 ### Vertical position
 
@@ -109,6 +120,7 @@ The ninth, rainbow swatch is **Custom**. It opens a small picker with a saturati
 - The default handle color is **Gray**, which turns blue on hover. Other colors keep their color on hover.
 - The default rail color is **Blue**, a subtle match for GitHub's highlighted comment headers. The other rail colors are bolder (about 50% strength at rest) so a chosen color stands out. Use Custom if you want a different strength.
 - **Hide** stops a part from being drawn. A hidden handle still works: hover the gap and drag as usual.
+- **Stealth mode:** hide both the handle and the rail, and the × is hidden too, so nothing from the extension is visible. Hovering anywhere along the rail's path, or focusing the handle with the keyboard, shows the handle, the rail in the default blue, and the × so you can find it, drag or reset.
 
 The palettes are in [`src/handles.js`](src/handles.js).
 
@@ -168,6 +180,8 @@ The suite loads the unpacked extension in Chromium and runs against test content
 - the rail's extent: below pinned headers, and ending at the Comment button on short pages
 - the handle graphic, frame, Colorize, color, custom picker, Hide and Randomize controls, the Knob migration, and Reset all
 - the reset and late-apply animations
+- stealth mode (nothing drawn at rest, rail and × on hover)
+- per-repo settings: popup switch, edits, dragging, reset and first-paint width
 - keyboard resizing, the popup controls, and pages that should be left untouched
 
 Test screenshots are written to `tests/screenshots/` (git-ignored). The README images in `docs/` are separate and committed.
@@ -176,4 +190,4 @@ Test screenshots are written to `tests/screenshots/` (git-ignored). The README i
 
 GitHub's detail pages center a fixed `max-width` container (1280px) that holds the main column and the sidebar. The extension raises that container's `max-width` through a CSS variable (`--gwh-width`), plus a couple of inner caps (e.g. the PR timeline's 1012px). Because it stays `margin: auto` centered, it grows equally on both sides while the sidebar keeps its own width.
 
-All rules are scoped under `html[data-gwh-page][data-gwh-sized]`. The content script sets those attributes at `document_start` from a `localStorage` copy of the synced setting, so the CSS applies as soon as GitHub renders.
+All rules are scoped under `html[data-gwh-page][data-gwh-sized]`. The content script sets those attributes at `document_start` from a `localStorage` copy of the synced settings (shared and per-repo), so the CSS applies as soon as GitHub renders.
