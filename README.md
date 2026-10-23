@@ -26,10 +26,23 @@ As you scroll, the handle stays at the middle of the window.
 
 The popup follows your system's light or dark setting. Shown on a repo page, with the **This repo only** switch, in the classic theme and in the Liquid glass (beta) theme.
 
+#### Looks gallery
+
+The popup opens on the **Looks gallery**: one-click presets plus any looks you save.
+
 | Light | Dark |
 | --- | --- |
-| ![Settings popup, light theme](docs/popup-light.png) | ![Settings popup, dark theme](docs/popup-dark.png) |
-| ![Settings popup, Liquid glass, light theme](docs/popup-glass-light.png) | ![Settings popup, Liquid glass, dark theme](docs/popup-glass-dark.png) |
+| ![Looks gallery, light theme](docs/popup-looks-light.png) | ![Looks gallery, dark theme](docs/popup-looks-dark.png) |
+| ![Looks gallery, Liquid glass, light theme](docs/popup-looks-glass-light.png) | ![Looks gallery, Liquid glass, dark theme](docs/popup-looks-glass-dark.png) |
+
+#### Customize
+
+The **Customize** tab sets each part of the look: handle graphic, frame, handle color and rail color.
+
+| Light | Dark |
+| --- | --- |
+| ![Customize tab, light theme](docs/popup-light.png) | ![Customize tab, dark theme](docs/popup-dark.png) |
+| ![Customize tab, Liquid glass, light theme](docs/popup-glass-light.png) | ![Customize tab, Liquid glass, dark theme](docs/popup-glass-dark.png) |
 
 ### Color combinations
 
@@ -42,7 +55,7 @@ Fifteen randomized combinations of handle graphic, frame, handle color and rail 
 <table>
   <tr><td align="center" valign="top"><img src="docs/combos/01-light-triple-raised-colorized-blue-yellow.png" width="150" height="225" alt="Triple line · Raised (colorized) · Blue · Yellow rail, light"><br><sub>Triple line · Raised (colorized) · Blue · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/02-light-rails-rounded-yellow-orange.png" width="150" height="225" alt="Double line · Rounded · Yellow · Orange rail, light"><br><sub>Double line · Rounded · Yellow · Orange rail</sub></td><td align="center" valign="top"><img src="docs/combos/03-light-dash-square-colorized-gray-green.png" width="150" height="225" alt="Dash · Square (colorized) · Gray · Green rail, light"><br><sub>Dash · Square (colorized) · Gray · Green rail</sub></td><td align="center" valign="top"><img src="docs/combos/04-light-cursor-dashed-colorized-yellow-blue.png" width="150" height="225" alt="Resize cursor · Dashed (colorized) · Yellow · Blue rail, light"><br><sub>Resize cursor · Dashed (colorized) · Yellow · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/05-light-hairline-pill-yellow-blue.png" width="150" height="225" alt="Hairline · Capsule · Yellow · Blue rail, light"><br><sub>Hairline · Capsule · Yellow · Blue rail</sub></td></tr>
   <tr><td align="center" valign="top"><img src="docs/combos/06-light-arrows-well-yellow-blue.png" width="150" height="225" alt="Arrows · Well · Yellow · Blue rail, light"><br><sub>Arrows · Well · Yellow · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/07-light-dots-3x5-pill-colorized-green-blue.png" width="150" height="225" alt="Dot grid (3×5) · Capsule (colorized) · Green · Blue rail, light"><br><sub>Dot grid (3×5) · Capsule (colorized) · Green · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/08-light-grip-2x5-well-yellow-yellow.png" width="150" height="225" alt="Grip (2×5) · Well · Yellow · Yellow rail, light"><br><sub>Grip (2×5) · Well · Yellow · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/09-light-double-arrow-rounded-orange-gray.png" width="150" height="225" alt="Double arrow · Rounded · Orange · Gray rail, light"><br><sub>Double arrow · Rounded · Orange · Gray rail</sub></td><td align="center" valign="top"><img src="docs/combos/10-light-ridges-raised-colorized-gray-yellow.png" width="150" height="225" alt="Ridges (5) · Raised (colorized) · Gray · Yellow rail, light"><br><sub>Ridges (5) · Raised (colorized) · Gray · Yellow rail</sub></td></tr>
-  <tr><td align="center" valign="top"><img src="docs/combos/11-light-grip-none-gray-gray.png" width="150" height="225" alt="Grip (2×3) · no frame · Gray · Gray rail, light"><br><sub>Grip (2×3) · no frame · Gray · Gray rail</sub></td><td align="center" valign="top"><img src="docs/combos/12-light-staggered-raised-red-blue.png" width="150" height="225" alt="Staggered dots · Raised · Red · Blue rail, light"><br><sub>Staggered dots · Raised · Red · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/13-light-grip-2x4-none-yellow-yellow.png" width="150" height="225" alt="Grip (2×4) · no frame · Yellow · Yellow rail, light"><br><sub>Grip (2×4) · no frame · Yellow · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/14-light-ridges-4-pill-colorized-orange-orange.png" width="150" height="225" alt="Ridges (4, wide) · Capsule (colorized) · Orange · Orange rail, light"><br><sub>Ridges (4, wide) · Capsule (colorized) · Orange · Orange rail</sub></td><td align="center" valign="top"><img src="docs/combos/15-light-dots-353-none-red-red.png" width="150" height="225" alt="Dots (3-5-3) · no frame · Red · Red rail, light"><br><sub>Dots (3-5-3) · no frame · Red · Red rail</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/combos/11-light-grip-none-gray-gray.png" width="150" height="225" alt="Grip (2×3) · no frame · Gray · Gray rail, light"><br><sub>Grip (2×3) · no frame · Gray · Gray rail</sub></td><td align="center" valign="top"><img src="docs/combos/12-light-staggered-raised-red-blue.png" width="150" height="225" alt="Staggered dots · Raised · Red · Blue rail, light"><br><sub>Staggered dots · Raised · Red · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/13-light-grip-2x4-none-yellow-yellow.png" width="150" height="225" alt="Grip (2×4) · no frame · Yellow · Yellow rail, light"><br><sub>Grip (2×4) · no frame · Yellow · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/14-light-ridges-4-pill-colorized-orange-orange.png" width="150" height="225" alt="Ridges (4) · Capsule (colorized) · Orange · Orange rail, light"><br><sub>Ridges (4) · Capsule (colorized) · Orange · Orange rail</sub></td><td align="center" valign="top"><img src="docs/combos/15-light-dots-353-none-red-red.png" width="150" height="225" alt="Dots (3-5-3) · no frame · Red · Red rail, light"><br><sub>Dots (3-5-3) · no frame · Red · Red rail</sub></td></tr>
 </table>
 
 </details>
@@ -54,7 +67,7 @@ Fifteen randomized combinations of handle graphic, frame, handle color and rail 
 <table>
   <tr><td align="center" valign="top"><img src="docs/combos/01-dark-triple-raised-colorized-blue-yellow.png" width="150" height="225" alt="Triple line · Raised (colorized) · Blue · Yellow rail, dark"><br><sub>Triple line · Raised (colorized) · Blue · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/02-dark-rails-rounded-yellow-orange.png" width="150" height="225" alt="Double line · Rounded · Yellow · Orange rail, dark"><br><sub>Double line · Rounded · Yellow · Orange rail</sub></td><td align="center" valign="top"><img src="docs/combos/03-dark-dash-square-colorized-gray-green.png" width="150" height="225" alt="Dash · Square (colorized) · Gray · Green rail, dark"><br><sub>Dash · Square (colorized) · Gray · Green rail</sub></td><td align="center" valign="top"><img src="docs/combos/04-dark-cursor-dashed-colorized-yellow-blue.png" width="150" height="225" alt="Resize cursor · Dashed (colorized) · Yellow · Blue rail, dark"><br><sub>Resize cursor · Dashed (colorized) · Yellow · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/05-dark-hairline-pill-yellow-blue.png" width="150" height="225" alt="Hairline · Capsule · Yellow · Blue rail, dark"><br><sub>Hairline · Capsule · Yellow · Blue rail</sub></td></tr>
   <tr><td align="center" valign="top"><img src="docs/combos/06-dark-arrows-well-yellow-blue.png" width="150" height="225" alt="Arrows · Well · Yellow · Blue rail, dark"><br><sub>Arrows · Well · Yellow · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/07-dark-dots-3x5-pill-colorized-green-blue.png" width="150" height="225" alt="Dot grid (3×5) · Capsule (colorized) · Green · Blue rail, dark"><br><sub>Dot grid (3×5) · Capsule (colorized) · Green · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/08-dark-grip-2x5-well-yellow-yellow.png" width="150" height="225" alt="Grip (2×5) · Well · Yellow · Yellow rail, dark"><br><sub>Grip (2×5) · Well · Yellow · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/09-dark-double-arrow-rounded-orange-gray.png" width="150" height="225" alt="Double arrow · Rounded · Orange · Gray rail, dark"><br><sub>Double arrow · Rounded · Orange · Gray rail</sub></td><td align="center" valign="top"><img src="docs/combos/10-dark-ridges-raised-colorized-gray-yellow.png" width="150" height="225" alt="Ridges (5) · Raised (colorized) · Gray · Yellow rail, dark"><br><sub>Ridges (5) · Raised (colorized) · Gray · Yellow rail</sub></td></tr>
-  <tr><td align="center" valign="top"><img src="docs/combos/11-dark-grip-none-gray-gray.png" width="150" height="225" alt="Grip (2×3) · no frame · Gray · Gray rail, dark"><br><sub>Grip (2×3) · no frame · Gray · Gray rail</sub></td><td align="center" valign="top"><img src="docs/combos/12-dark-staggered-raised-red-blue.png" width="150" height="225" alt="Staggered dots · Raised · Red · Blue rail, dark"><br><sub>Staggered dots · Raised · Red · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/13-dark-grip-2x4-none-yellow-yellow.png" width="150" height="225" alt="Grip (2×4) · no frame · Yellow · Yellow rail, dark"><br><sub>Grip (2×4) · no frame · Yellow · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/14-dark-ridges-4-pill-colorized-orange-orange.png" width="150" height="225" alt="Ridges (4, wide) · Capsule (colorized) · Orange · Orange rail, dark"><br><sub>Ridges (4, wide) · Capsule (colorized) · Orange · Orange rail</sub></td><td align="center" valign="top"><img src="docs/combos/15-dark-dots-353-none-red-red.png" width="150" height="225" alt="Dots (3-5-3) · no frame · Red · Red rail, dark"><br><sub>Dots (3-5-3) · no frame · Red · Red rail</sub></td></tr>
+  <tr><td align="center" valign="top"><img src="docs/combos/11-dark-grip-none-gray-gray.png" width="150" height="225" alt="Grip (2×3) · no frame · Gray · Gray rail, dark"><br><sub>Grip (2×3) · no frame · Gray · Gray rail</sub></td><td align="center" valign="top"><img src="docs/combos/12-dark-staggered-raised-red-blue.png" width="150" height="225" alt="Staggered dots · Raised · Red · Blue rail, dark"><br><sub>Staggered dots · Raised · Red · Blue rail</sub></td><td align="center" valign="top"><img src="docs/combos/13-dark-grip-2x4-none-yellow-yellow.png" width="150" height="225" alt="Grip (2×4) · no frame · Yellow · Yellow rail, dark"><br><sub>Grip (2×4) · no frame · Yellow · Yellow rail</sub></td><td align="center" valign="top"><img src="docs/combos/14-dark-ridges-4-pill-colorized-orange-orange.png" width="150" height="225" alt="Ridges (4) · Capsule (colorized) · Orange · Orange rail, dark"><br><sub>Ridges (4) · Capsule (colorized) · Orange · Orange rail</sub></td><td align="center" valign="top"><img src="docs/combos/15-dark-dots-353-none-red-red.png" width="150" height="225" alt="Dots (3-5-3) · no frame · Red · Red rail, dark"><br><sub>Dots (3-5-3) · no frame · Red · Red rail</sub></td></tr>
 </table>
 
 </details>
@@ -76,8 +89,9 @@ Fifteen randomized combinations of handle graphic, frame, handle color and rail 
   - a **This repo only** switch, shown when the current tab is on a repo
   - an on/off toggle, the current width and Reset
   - the handle's vertical position
-  - 16 handle graphics and 8 frames to put them in
-  - handle and rail colors (8 presets plus a custom color picker), each with a **Hide** switch
+  - two tabs for the handle's look:
+    - **Looks gallery** (opens first): ready-made looks and your own saved ones (see [Looks gallery](#looks-gallery))
+    - **Customize**: 16 handle graphics and 8 frames to put them in, and handle and rail colors (8 presets plus a custom color picker), each with a **Hide** switch
   - a 🎲 button (Randomize), which picks a random handle, frame, Colorize setting, handle color and rail color (and turns off Hide so the result is visible)
   - **Reset all to defaults**, which resets every style and position setting but keeps your width (use Reset next to the width for that)
   - a **Liquid glass (beta)** switch in the ⓘ panel, which restyles the popup itself with an Apple-style translucent look (it doesn't change the handle on GitHub)
@@ -93,6 +107,18 @@ When the popup is opened on a repo's page, a **This repo only** switch appears w
 - Turn the switch off to remove the repo's own settings and go back to the shared ones.
 - Repos are matched by owner and name, so all issues, PRs and discussions in a repo share its settings.
 
+### Looks gallery
+
+A look is a saved combination of handle graphic, frame, Colorize, colors and Hide switches. It doesn't include the width or vertical position. The **Looks gallery** tab shows each look as a small preview of the handle and rail on a page. Click a look, or move between looks with the arrow keys, to apply it.
+
+- Built-in looks: Classic (the defaults), Highlighter, Grape, Terminal, Mono, Ember and Stealth (handle and rail hidden until hover).
+- **+ Save look** saves your current settings under a name (<kbd>Enter</kbd> saves, <kbd>Esc</kbd> cancels). It's unavailable when the current settings already match a look.
+- The look that matches your current settings is checked, and its name is shown above the gallery. If no look matches, it shows **Unsaved**.
+- Hover a saved look and click its **×** to delete it. Built-in looks can't be deleted.
+- Two rows of looks are visible at a time; scroll to see more. You can save up to 24 looks.
+- Saved looks are synced and shared by every repo. Applying a look on a repo with its own settings changes only that repo. **Reset all to defaults** doesn't delete saved looks.
+- The popup opens on the Looks gallery the first time, then on whichever tab you last used.
+
 ### Vertical position
 
 - **Middle**: stays at the vertical center of the window. It never rises above the first comment, and on short pages it stops at the end of the content.
@@ -103,7 +129,7 @@ When the popup is opened on a repo's page, a **This repo only** switch appears w
 
 The handle is a graphic inside an optional frame, picked separately.
 
-**Graphics (16):** Hairline, Dash, Pill, Double line, Triple line, Grip (2×3), **Grip (2×4, default)**, Grip (2×5), Dots (3-5-3), Dot grid (3×5), Staggered dots, Ridges (4, wide), Ridges (5), Arrows, Double arrow and Resize cursor.
+**Graphics (16):** Hairline, Dash, Pill, Double line, Triple line, Grip (2×3), **Grip (2×4, default)**, Grip (2×5), Dots (3-5-3), Dot grid (3×5), Staggered dots, Ridges (4), Ridges (5), Arrows, Double arrow and Resize cursor.
 
 **Frames (8):** None, Dashed, Square, Rounded, Capsule, Filled, **Well (default)** and Raised. Frames are neutral gray by default. Turn on **Colorize** to tint the frame with the handle color. Bordered frames pick up the handle's hover color when you hover or drag.
 
@@ -156,7 +182,7 @@ src/frames.css    handle frame styles, shared by the page and the popup
 src/handles.js    settings: handle graphics, frames, palettes, defaults; shared by the page and the popup
 src/popup.*       toolbar popup
 src/glass.css     Liquid glass (beta) popup theme
-src/popup-theme.js applies the cached popup theme before first paint
+src/popup-theme.js applies the cached popup theme and tab before first paint
 icons/            extension icons
 docs/             README screenshots
 tests/            Playwright end-to-end checks against live github.com
@@ -179,6 +205,7 @@ The suite loads the unpacked extension in Chromium and runs against test content
 - the three handle positions (middle, top, dynamic) and the idle fade
 - the rail's extent: below pinned headers, and ending at the Comment button on short pages
 - the handle graphic, frame, Colorize, color, custom picker, Hide and Randomize controls, the Knob migration, and Reset all
+- the Looks gallery / Customize tabs: applying, saving, deleting and scrolling looks, keyboard navigation, and the popup's height
 - the reset and late-apply animations
 - stealth mode (nothing drawn at rest, rail and × on hover)
 - per-repo settings: popup switch, edits, dragging, reset and first-paint width

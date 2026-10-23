@@ -633,6 +633,85 @@ check('popup: Reset all restores every style default, keeps the width, and updat
   && afterReset.handle === 'grip-2x4' && afterReset.frame === 'well' && afterReset.frameColored === false && afterReset.handleColor === 'gray' && afterReset.railColor === 'blue'
   && !afterReset.handleHidden && !afterReset.railHidden && colors.barVisible && colors.railVisible
   && (await pop.locator('#reset-all').isDisabled()) && Number.isFinite(widthBeforeReset) && (await layout(dark.page)).sized, JSON.stringify(afterReset));
+
+// ---------- Looks gallery ----------
+const popHeight = () => pop.evaluate(() => document.body.offsetHeight);
+const tabOpen = () => pop.evaluate(() => document.documentElement.dataset.tab);
+await pop.evaluate(() => localStorage.removeItem('gwh-tab'));
+await pop.reload();
+await pop.waitForTimeout(300);
+check('tabs: Looks gallery is the first tab and opens by default', (await tabOpen()) === 'looks'
+  && (await pop.locator('.tab').evaluateAll((t) => t.map((x) => x.dataset.tab).join())) === 'looks,customize'
+  && (await pop.locator('#tab-looks').getAttribute('aria-selected')) === 'true' && (await pop.locator('#looks').isVisible())
+  && !(await pop.locator('#handles').isVisible()) && (await pop.locator('#positions').isVisible()));
+const heightLooks = await popHeight();
+await pop.locator('#tab-customize').click();
+const heightCustomize = await popHeight();
+check('tabs: Customize swaps the gallery for the style settings and keeps the popup height', (await tabOpen()) === 'customize'
+  && (await pop.locator('#handles').isVisible()) && !(await pop.locator('#looks').isVisible())
+  && heightLooks === heightCustomize && heightCustomize <= 600, `${heightLooks} → ${heightCustomize}`);
+await pop.locator('#tab-looks').click();
+const lookIds = () => pop.locator('#looks .look').evaluateAll((b) => b.map((x) => x.dataset.id));
+const checkedLook = () => pop.locator('#looks .look[aria-checked="true"]').getAttribute('data-id').catch(() => null);
+check('looks: 7 built-in looks plus Save look, defaults match Classic', String(await lookIds()) === 'classic,highlighter,grape,terminal,mono,ember,stealth,new'
+  && (await checkedLook()) === 'classic' && (await pop.locator('#look-name').textContent()) === 'Classic'
+  && (await pop.locator('[data-id="new"]').isDisabled()));
+await pop.locator('#looks [data-id="ember"]').click();
+await dark.page.waitForTimeout(400);
+st = await getStorage(dark.context, dark.extId);
+check('looks: picking a look applies it to the page and keeps the width', (await styleOf()) === 'dots-353/rounded' && st.frameColored === true
+  && st.handleColor === 'orange' && st.railColor === 'orange' && st.width === widthBeforeReset && (await checkedLook()) === 'ember', JSON.stringify(st));
+await pop.locator('#looks [data-id="stealth"]').click();
+await dark.page.waitForTimeout(400);
+colors = await colorsOf();
+check('looks: Stealth hides the handle and rail', !colors.barVisible && !colors.railVisible && (await checkedLook()) === 'stealth');
+await pop.locator('#looks [data-id="classic"]').focus();
+await pop.keyboard.press('ArrowRight');
+await dark.page.waitForTimeout(300);
+check('looks: arrow keys move between looks and apply them', (await checkedLook()) === 'highlighter'
+  && (await pop.evaluate(() => document.activeElement.dataset.id)) === 'highlighter' && (await styleOf()) === 'pill/none');
+await pop.evaluate(() => chrome.storage.sync.set({ handle: 'cursor', railColor: 'custom', railCustom: '#ff00ff80' }));
+await pop.waitForTimeout(300);
+check('looks: settings that match no look show as Unsaved and can be saved', (await checkedLook()) === null
+  && (await pop.locator('#look-name').textContent()) === 'Unsaved' && !(await pop.locator('[data-id="new"]').isDisabled()));
+await pop.locator('[data-id="new"]').click();
+await pop.locator('.look-new.naming input').fill('Neon');
+await pop.keyboard.press('Escape');
+check('looks: Escape cancels naming', !(await getStorage(dark.context, dark.extId)).looks && (await pop.locator('[data-id="new"]').isVisible()));
+await pop.locator('[data-id="new"]').click();
+await pop.locator('.look-new.naming input').fill('  Neon  ');
+await pop.keyboard.press('Enter');
+await pop.waitForTimeout(300);
+st = await getStorage(dark.context, dark.extId);
+const neon = st.looks && st.looks[0];
+check('looks: Save look stores a named look with the style settings only', st.looks.length === 1 && neon.name === 'Neon' && neon.values.handle === 'cursor'
+  && neon.values.railCustom === '#ff00ff80' && !('width' in neon.values) && !('position' in neon.values)
+  && (await checkedLook()) === neon.id && (await pop.locator('#look-name').textContent()) === 'Neon' && (await pop.locator('[data-id="new"]').isDisabled()), JSON.stringify(st.looks));
+await pop.reload();
+await pop.waitForTimeout(300);
+check('tabs: the open tab and saved looks persist across popup opens', (await tabOpen()) === 'looks' && (await pop.locator('#looks').isVisible())
+  && (await checkedLook()) === neon.id);
+await pop.locator('#looks [data-id="classic"]').click();
+await pop.waitForTimeout(200);
+await pop.locator(`#looks [data-id="${neon.id}"]`).click();
+await dark.page.waitForTimeout(400);
+check('looks: a saved look applies like a built-in one', (await styleOf()) === 'cursor/none' && /255, 0, 255/.test((await colorsOf()).railImage), (await colorsOf()).railImage);
+await pop.evaluate((list) => chrome.storage.sync.set({ looks: list }), [neon, ...Array.from({ length: 6 }, (_, i) => ({ id: `look-t${i}`, name: `Test ${i}`, values: { handle: 'dash', frame: ['none', 'dashed', 'square', 'rounded', 'pill', 'filled'][i] } }))]);
+await pop.waitForTimeout(300);
+const scroll = await pop.locator('#looks').evaluate((el) => ({ sh: el.scrollHeight, ch: el.clientHeight }));
+check('looks: more than 8 tiles scroll inside the gallery; the popup keeps its height', scroll.sh > scroll.ch && (await popHeight()) === heightCustomize,
+  `${JSON.stringify(scroll)} ${await popHeight()}`);
+await pop.locator(`#looks [data-id="${neon.id}"]`).hover();
+await pop.locator(`[data-id="delete-${neon.id}"]`).click();
+await pop.waitForTimeout(300);
+st = await getStorage(dark.context, dark.extId);
+check('looks: × deletes a saved look', st.looks.length === 6 && !st.looks.some((l) => l.id === neon.id)
+  && (await pop.locator(`#looks [data-id="${neon.id}"]`).count()) === 0 && (await pop.locator('#look-name').textContent()) === 'Unsaved');
+await pop.locator('#reset-all').click();
+await pop.waitForTimeout(300);
+check('looks: Reset all keeps saved looks', (await getStorage(dark.context, dark.extId)).looks.length === 6 && (await checkedLook()) === 'classic');
+await pop.evaluate(() => chrome.storage.sync.remove('looks'));
+await pop.locator('#tab-customize').click();
 await pop.close();
 await dark.context.close();
 

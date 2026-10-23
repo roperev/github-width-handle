@@ -48,6 +48,20 @@
       <div id="positions" class="segments" role="radiogroup" aria-labelledby="position-label"></div>
     </div>
     </section>
+    <div id="tabs" class="tabs" role="tablist" aria-label="Style">
+      <button type="button" id="tab-looks" class="tab" role="tab" aria-controls="panel-looks" data-tab="looks">Looks gallery</button>
+      <button type="button" id="tab-customize" class="tab" role="tab" aria-controls="panel-customize" data-tab="customize">Customize</button>
+    </div>
+    <div class="panels">
+    <div id="panel-looks" class="panel" role="tabpanel" aria-labelledby="tab-looks">
+    <section class="card looks-card">
+    <div class="row stack looks-row">
+      <span id="look-label">Look <span id="look-name" class="muted"></span></span>
+      <div id="looks" class="looks" role="radiogroup" aria-labelledby="look-label"></div>
+    </div>
+    </section>
+    </div>
+    <div id="panel-customize" class="panel" role="tabpanel" aria-labelledby="tab-customize">
     <section class="card">
     <div class="row stack">
       <span id="handle-label">Handle <span id="handle-name" class="muted"></span></span>
@@ -77,6 +91,8 @@
       <div id="rail-colors" class="swatches" role="radiogroup" aria-labelledby="rail-color-label"></div>
     </div>
     </section>
+    </div>
+    </div>
     <div id="picker" class="picker" role="dialog" aria-label="Custom color" hidden>
       <div class="sv" tabindex="0" aria-label="Saturation and brightness"><span class="sv-thumb"></span></div>
       <input class="hue slider" type="range" min="0" max="360" step="1" aria-label="Hue" />

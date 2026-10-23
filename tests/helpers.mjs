@@ -21,6 +21,11 @@ export async function launch({ width = 2400, height = 1200, colorScheme = 'light
     const list = await chrome.developerPrivate.getExtensionsInfo();
     return list.find((e) => e.name === 'GitHub Width Handle').id;
   });
+  // Most checks drive the Customize tab; the Looks gallery checks clear this to test the default.
+  const setup = await context.newPage();
+  await setup.goto(`chrome-extension://${extId}/src/popup.html`);
+  await setup.evaluate(() => localStorage.setItem('gwh-tab', 'customize'));
+  await setup.close();
   return { context, page, extId };
 }
 
