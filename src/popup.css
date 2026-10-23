@@ -109,17 +109,6 @@ header .info {
   margin-left: auto;
 }
 
-/* Section headings ("Shape", "Colors"): shown only in the Liquid glass theme. */
-.section-title {
-  display: none;
-  margin: 0;
-  padding: 8px 0 2px;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.5;
-  text-align: center;
-}
-
 .value {
   display: flex;
   align-items: center;

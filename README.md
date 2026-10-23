@@ -24,11 +24,12 @@ As you scroll, the handle stays at the middle of the window.
 
 ### Settings popup
 
-The popup follows your system's light or dark setting.
+The popup follows your system's light or dark setting. Shown on a repo page, with the **This repo only** switch, in the classic theme and in the Liquid glass (beta) theme.
 
 | Light | Dark |
 | --- | --- |
 | ![Settings popup, light theme](docs/popup-light.png) | ![Settings popup, dark theme](docs/popup-dark.png) |
+| ![Settings popup, Liquid glass, light theme](docs/popup-glass-light.png) | ![Settings popup, Liquid glass, dark theme](docs/popup-glass-dark.png) |
 
 ### Color combinations
 

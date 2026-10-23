@@ -531,15 +531,9 @@
   border-top-color: var(--border);
 }
 
-/* Section headings sit between the cards, inset to line up with the card text. */
-.glass .section-title {
-  display: block;
-  padding: 0 14px 2px;
-  line-height: 1.1;
-  color: var(--fg-muted);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: -0.1px;
+/* A little extra air between cards, where the section headings used to sit. */
+.glass .card + .card {
+  margin-top: 12px;
 }
 
 /* Dice: a round glass button beside the wide Reset all capsule. */
