@@ -291,14 +291,14 @@ label {
 }
 
 .frame-option {
-  height: 52px;
+  height: 44px;
 }
 
 .handle-option {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
+  height: 36px;
   padding: 0;
   border: 1px solid var(--border);
   border-radius: 6px;
@@ -592,37 +592,26 @@ label {
   }
 }
 
-/* Custom color: a rainbow ring around the chosen color. */
+/* Custom color: a classic rainbow picker; the chosen hex shows beside the label. */
 .swatch.custom {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: conic-gradient(#f85149, #d29922, #3fb950, #39c5cf, #4493f8, #ab7df8, #db61a2, #f85149);
+  background:
+    radial-gradient(circle, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0) 70%),
+    conic-gradient(#ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff, #ff0000);
 }
 
 .swatch.custom.dot {
-  box-shadow: none;
+  box-shadow: inset 0 0 0 1px var(--swatch-ring);
 }
 
 .swatch.custom.rail {
-  width: 8px;
-  border-radius: 4px;
-  box-shadow: none;
+  width: 6px;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #ff0000, #ffff00, #00ff00, #00ffff, #0000ff, #ff00ff);
+  box-shadow: inset 0 0 0 1px var(--swatch-ring);
 }
 
 .custom-fill {
-  display: block;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: transparent;
-  box-shadow: 0 0 0 1.5px var(--bg);
-}
-
-.swatch.custom.rail .custom-fill {
-  width: 4px;
-  height: 14px;
-  border-radius: 2px;
+  display: none;
 }
 
 /* Custom color picker, shown over the popup. */
@@ -753,6 +742,320 @@ label {
   text-align: right;
 }
 
+/* Tabs: the Looks gallery (saved combinations of settings) or Customize (every setting). */
+.tabs {
+  display: flex;
+  border-top: 1px solid var(--border);
+}
+
+.tab {
+  position: relative;
+  flex: 1;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--fg-muted);
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.12s ease;
+}
+
+.tab:hover {
+  color: var(--fg);
+}
+
+.tab[aria-selected="true"] {
+  color: var(--fg);
+  font-weight: 600;
+}
+
+.tab[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  bottom: -1px;
+  left: 28%;
+  right: 28%;
+  z-index: 1;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--accent);
+}
+
+.tab:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 6px;
+}
+
+/* Both panels share one cell, so the popup keeps its height when switching tabs. */
+.panels {
+  display: grid;
+}
+
+.panel {
+  grid-area: 1 / 1;
+  min-width: 0;
+}
+
+:root:not([data-tab="customize"]) #panel-customize,
+:root[data-tab="customize"] #panel-looks {
+  visibility: hidden;
+}
+
+#panel-looks {
+  display: flex;
+  flex-direction: column;
+}
+
+.looks-row {
+  flex: 1;
+  min-height: 0;
+}
+
+/* Two rows of looks fill the panel; more scroll. */
+.looks {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-auto-rows: calc((100% - 8px) / 2);
+  gap: 8px;
+  margin: -3px;
+  padding: 3px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+}
+
+.look-tile {
+  position: relative;
+  min-height: 0;
+}
+
+.look {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: none;
+  color: var(--fg-muted);
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 0.12s ease, color 0.12s ease, box-shadow 0.12s ease;
+}
+
+.look:hover {
+  border-color: color-mix(in srgb, var(--fg-muted) 55%, var(--border));
+  color: var(--fg);
+}
+
+.look:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.look[aria-checked="true"] {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+  color: var(--accent);
+}
+
+.look[aria-checked="true"]::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--accent) url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="white"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 1 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"/></svg>') center / 10px no-repeat;
+}
+
+/* A mini page: comment lines, the rail and the handle as they'll look. */
+.look-stage {
+  position: relative;
+  flex: 1;
+  display: grid;
+  place-items: center;
+  width: 100%;
+}
+
+.look-lines {
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: 9px;
+  right: calc(50% + 8px);
+  border-radius: 2px;
+  background: repeating-linear-gradient(180deg, var(--border) 0 3px, transparent 3px 8px);
+}
+
+.look-rail {
+  position: absolute;
+  top: 8px;
+  bottom: 8px;
+  left: 50%;
+  width: 4px;
+  margin-left: -2px;
+  border-radius: 2px;
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--rc) 70%, transparent), transparent);
+  /* A break around the handle, like the real rail; --gap is half the handle's height plus 6px. */
+  --gap: 20px;
+  -webkit-mask: linear-gradient(180deg, #000 calc(50% - var(--gap)), transparent 0 calc(50% + var(--gap)), #000 0);
+  mask: linear-gradient(180deg, #000 calc(50% - var(--gap)), transparent 0 calc(50% + var(--gap)), #000 0);
+}
+
+.look-handle {
+  position: relative;
+  color: var(--hc);
+}
+
+.look-handle svg {
+  display: block;
+  fill: currentColor;
+}
+
+.look-stage.colored .look-handle {
+  --gwh-frame-border: var(--hc);
+  --gwh-frame-bg: color-mix(in srgb, var(--hc) 10%, var(--bg));
+  --gwh-frame-fill: color-mix(in srgb, var(--hc) 22%, transparent);
+}
+
+.look-stage.handle-hidden .look-handle {
+  opacity: 0.18;
+}
+
+.look-stage.rail-hidden .look-rail {
+  opacity: 0.15;
+}
+
+.look-eye {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 18px;
+  height: 18px;
+  fill: var(--fg-muted);
+  translate: -50% -50%;
+}
+
+.look-name {
+  width: 100%;
+  padding: 3px 4px 4px;
+  border-top: 1px solid var(--border);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.look[aria-checked="true"] .look-name {
+  border-top-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.look-new {
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  border-style: dashed;
+}
+
+.look-new .look-name {
+  border: 0;
+}
+
+.look-plus {
+  font-size: 20px;
+  font-weight: 300;
+  line-height: 1;
+}
+
+.look-new:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.look-new:disabled:hover {
+  border-color: var(--border);
+  color: var(--fg-muted);
+}
+
+.look-new.naming {
+  gap: 6px;
+  padding: 0 6px;
+  border-style: solid;
+  border-color: var(--accent);
+  cursor: default;
+}
+
+.look-new.naming input {
+  width: 100%;
+  padding: 3px 5px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: var(--bg);
+  color: var(--fg);
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
+  outline: none;
+}
+
+.look-new.naming input:focus {
+  border-color: var(--accent);
+}
+
+.look-hint {
+  color: var(--fg-muted);
+  font-size: 10px;
+  white-space: nowrap;
+}
+
+/* Saved looks can be deleted; the × shows on hover or keyboard focus. */
+.look-delete {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  padding: 0 0 1px;
+  border: 0;
+  border-radius: 50%;
+  background: var(--tip-bg);
+  color: var(--tip-fg);
+  font-size: 13px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s ease;
+}
+
+.look-tile:hover .look-delete,
+.look-delete:focus-visible {
+  opacity: 1;
+}
+
+.look-delete:hover {
+  background: var(--danger);
+  color: #ffffff;
+}
+
+.look-delete:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
 /* Classic polish: a soft page gradient, fading dividers and a little depth on the controls.
    Scoped away from the Liquid glass theme, which has its own recipe. */
 :root {
@@ -819,4 +1122,26 @@ label {
 :root:not(.glass) .frame-option[aria-checked="true"]::after {
   background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 60%, transparent), var(--accent), color-mix(in srgb, var(--accent) 60%, transparent));
   box-shadow: 0 0 4px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+:root:not(.glass) .look {
+  background: linear-gradient(180deg, var(--tile-sheen), transparent);
+}
+
+:root:not(.glass) .look[aria-checked="true"] {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, transparent), color-mix(in srgb, var(--accent) 3%, transparent));
+  box-shadow: inset 0 0 0 1px var(--accent), 0 1px 8px color-mix(in srgb, var(--accent) 25%, transparent);
+}
+
+:root:not(.glass) .look-new {
+  background: none;
+}
+
+:root:not(.glass) .tab[aria-selected="true"]::after {
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 60%, transparent), var(--accent), color-mix(in srgb, var(--accent) 60%, transparent));
+  box-shadow: 0 0 4px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+:root:not(.glass) .tabs {
+  border-image: linear-gradient(90deg, transparent, var(--border) 12%, var(--border) 88%, transparent) 1;
 }

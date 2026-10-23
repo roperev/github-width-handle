@@ -10,6 +10,12 @@
   padding: 7px 4px;
   border: 1px solid transparent;
   border-radius: 6px;
+  flex-shrink: 0;
+}
+
+/* Never squeeze the graphic: scaling thin 1px lines drops some of them when rasterized. */
+.gwh-frame > svg {
+  flex-shrink: 0;
 }
 
 .gwh-frame[data-frame="none"] {

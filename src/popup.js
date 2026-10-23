@@ -1,4 +1,4 @@
-const { HANDLES, FRAMES, HANDLE_COLORS, RAIL_COLORS, DEFAULTS, REPO_KEYS, normalizeHex, repoKey, settingsFor } = globalThis.GWH;
+const { HANDLES, FRAMES, HANDLE_COLORS, RAIL_COLORS, DEFAULTS, REPO_KEYS, normalize, normalizeHex, repoKey, settingsFor } = globalThis.GWH;
 const POSITIONS = [
   { id: 'middle', name: 'Middle', tip: 'Always centered in the window' },
   { id: 'top', name: 'Top', tip: 'Beside the first comment, scrolls with the page' },
@@ -298,6 +298,213 @@ const pickers = [
   }),
 ];
 
+// ---------- tabs ----------
+
+const tabs = [...document.querySelectorAll('.tab')];
+function showTab(name, { focus = false } = {}) {
+  picker.close();
+  document.documentElement.dataset.tab = name;
+  localStorage.setItem('gwh-tab', name);
+  for (const tab of tabs) {
+    const on = tab.dataset.tab === name;
+    tab.setAttribute('aria-selected', String(on));
+    tab.tabIndex = on ? 0 : -1;
+    if (on && focus) tab.focus();
+  }
+}
+for (const tab of tabs) {
+  tab.addEventListener('click', () => showTab(tab.dataset.tab));
+  tab.addEventListener('keydown', (e) => {
+    if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+    e.preventDefault();
+    showTab(tabs[(tabs.indexOf(tab) + 1) % tabs.length].dataset.tab, { focus: true });
+  });
+}
+showTab(document.documentElement.dataset.tab);
+
+// ---------- looks gallery ----------
+// A look is a named set of style values (no width or position). Built-in looks ship with the
+// extension; saved looks live in storage.sync under `looks`, shared by every repo.
+
+const LOOK_KEYS = ['handle', 'frame', 'frameColored', 'handleColor', 'handleCustom', 'handleHidden', 'railColor', 'railCustom', 'railHidden'];
+const MAX_SAVED_LOOKS = 24;
+const BUILT_IN_LOOKS = [
+  { id: 'classic', name: 'Classic', values: {} },
+  { id: 'highlighter', name: 'Highlighter', values: { handle: 'pill', frame: 'none', handleColor: 'yellow', railColor: 'yellow' } },
+  { id: 'grape', name: 'Grape', values: { handle: 'arrows', frame: 'pill', frameColored: true, handleColor: 'custom', handleCustom: '#a371f7ff', railColor: 'custom', railCustom: '#a371f740' } },
+  { id: 'terminal', name: 'Terminal', values: { handle: 'ridges', frame: 'raised', handleColor: 'green', railColor: 'green' } },
+  { id: 'mono', name: 'Mono', values: { handle: 'hairline', frame: 'none', handleColor: 'gray', railColor: 'gray' } },
+  { id: 'ember', name: 'Ember', values: { handle: 'dots-353', frame: 'rounded', frameColored: true, handleColor: 'orange', railColor: 'orange' } },
+  { id: 'stealth', name: 'Stealth', values: { handleHidden: true, railHidden: true } },
+];
+const EYE_SLASH = '<svg class="look-eye" viewBox="0 0 16 16" aria-hidden="true"><path d="M.143 2.31a.75.75 0 0 1 1.047-.167l14.5 10.5a.75.75 0 1 1-.88 1.214l-2.248-1.628C11.346 13.19 9.792 14 8 14c-1.981 0-3.67-.992-4.933-2.078C1.797 10.832.88 9.577.43 8.9a1.619 1.619 0 0 1 0-1.797c.353-.533.995-1.42 1.868-2.305L.31 3.357A.75.75 0 0 1 .143 2.31Zm1.536 5.622A.12.12 0 0 0 1.657 8c0 .021.006.045.022.068.412.621 1.242 1.75 2.366 2.717C5.175 11.758 6.527 12.5 8 12.5c1.195 0 2.31-.488 3.29-1.191L9.063 9.695A2 2 0 0 1 6.058 7.52L3.529 5.688a14.207 14.207 0 0 0-1.85 2.244ZM8 3.5c-.516 0-1.017.09-1.499.251a.75.75 0 1 1-.473-1.423A6.207 6.207 0 0 1 8 2c1.981 0 3.67.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.11.166-.248.365-.41.587a.75.75 0 1 1-1.21-.887c.148-.201.272-.382.371-.53a.119.119 0 0 0 0-.137c-.412-.621-1.242-1.75-2.366-2.717C10.825 4.242 9.473 3.5 8 3.5Z"/></svg>';
+
+// Every look key, with defaults filled in and values validated.
+const fullLook = (values) => {
+  const all = normalize({ ...DEFAULTS, ...values });
+  return Object.fromEntries(LOOK_KEYS.map((key) => [key, all[key]]));
+};
+const pickLook = (values) => Object.fromEntries(LOOK_KEYS.map((key) => [key, values[key]]));
+// Custom hex values only count when that color is set to Custom.
+const sameLook = (a, b) => LOOK_KEYS.every((key) =>
+  (key === 'handleCustom' && a.handleColor !== 'custom') || (key === 'railCustom' && a.railColor !== 'custom') || a[key] === b[key]);
+function savedLooks() {
+  const list = Array.isArray(stored.looks) ? stored.looks : [];
+  return list.filter((l) => l && typeof l.id === 'string' && typeof l.name === 'string' && l.values && typeof l.values === 'object');
+}
+const allLooks = () => [
+  ...BUILT_IN_LOOKS.map((l) => ({ ...l, values: fullLook(l.values) })),
+  ...savedLooks().map((l) => ({ ...l, saved: true, values: fullLook(l.values) })),
+];
+
+function applyLook(look) {
+  picker.close();
+  const values = { ...look.values };
+  // Keep the current custom hex unless the look uses its own.
+  if (values.handleColor !== 'custom') delete values.handleCustom;
+  if (values.railColor !== 'custom') delete values.railCustom;
+  save(values);
+}
+
+// Kept locally right away so the gallery updates before storage reports the change.
+function saveLooks(list) {
+  stored = { ...stored, looks: list };
+  renderLooks(current);
+  return chrome.storage.sync.set({ looks: list });
+}
+
+const looksEl = $('looks');
+let namingLook = false;
+
+function lookPreview(values) {
+  const scheme = darkScheme.matches ? 'dark' : 'light';
+  const hc = HANDLE_COLORS.find((c) => c.id === values.handleColor);
+  const rc = RAIL_COLORS.find((c) => c.id === values.railColor);
+  const handleColor = hc.custom ? values.handleCustom : hc[scheme];
+  // Custom rails are often faint; preview them at full strength like the preset colors.
+  const railColor = rc.custom ? values.railCustom.slice(0, 7) : rc[scheme];
+  const svg = HANDLES.find((h) => h.id === values.handle).svg;
+  const stealth = values.handleHidden && values.railHidden;
+  return `<span class="look-stage${values.frameColored ? ' colored' : ''}${values.handleHidden ? ' handle-hidden' : ''}${values.railHidden ? ' rail-hidden' : ''}"
+    style="--hc: ${handleColor}; --rc: ${railColor}">
+    <span class="look-lines"></span><span class="look-rail"></span>
+    <span class="look-handle gwh-frame" data-frame="${values.frame}">${svg}</span>${stealth ? EYE_SLASH : ''}</span>`;
+}
+
+function renderLooks(values) {
+  if (namingLook) return;
+  const looks = allLooks();
+  const now = pickLook(values);
+  const match = looks.find((l) => sameLook(now, l.values));
+  $('look-name').textContent = match ? match.name : 'Unsaved';
+  const focused = document.activeElement && looksEl.contains(document.activeElement) ? document.activeElement.dataset.id : null;
+  looksEl.textContent = '';
+  const options = [];
+  for (const look of looks) {
+    const tile = document.createElement('div');
+    tile.className = 'look-tile';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'look';
+    btn.dataset.id = look.id;
+    btn.title = look.name;
+    btn.setAttribute('role', 'radio');
+    btn.setAttribute('aria-checked', String(look === match));
+    btn.tabIndex = look === (match || looks[0]) ? 0 : -1;
+    btn.innerHTML = `${lookPreview(look.values)}<span class="look-name"></span>`;
+    btn.querySelector('.look-name').textContent = look.name;
+    btn.addEventListener('click', () => applyLook(look));
+    tile.append(btn);
+    if (look.saved) {
+      const del = document.createElement('button');
+      del.type = 'button';
+      del.className = 'look-delete';
+      del.dataset.id = `delete-${look.id}`;
+      del.title = `Delete "${look.name}"`;
+      del.setAttribute('aria-label', `Delete look ${look.name}`);
+      del.textContent = '×';
+      del.addEventListener('click', () => saveLooks(savedLooks().filter((l) => l.id !== look.id)));
+      tile.append(del);
+    }
+    looksEl.append(tile);
+    options.push(btn);
+  }
+  // Arrow keys move between looks (four per row) and apply them, like the other pickers.
+  options.forEach((btn, i) => btn.addEventListener('keydown', (e) => {
+    const delta = { ArrowRight: 1, ArrowLeft: -1, ArrowDown: 4, ArrowUp: -4 }[e.key];
+    if (!delta) return;
+    e.preventDefault();
+    const next = Math.min(options.length - 1, Math.max(0, i + delta));
+    if (next === i) return;
+    applyLook(looks[next]);
+    options[next].focus();
+  }));
+
+  const full = savedLooks().length >= MAX_SAVED_LOOKS;
+  const add = document.createElement('button');
+  add.type = 'button';
+  add.className = 'look look-new';
+  add.dataset.id = 'new';
+  add.disabled = Boolean(match) || full;
+  add.title = match ? `This is already saved as "${match.name}". Change something in Customize first.`
+    : full ? `You can save up to ${MAX_SAVED_LOOKS} looks. Delete one to make room.` : 'Save the current settings as a look';
+  add.innerHTML = '<span class="look-plus" aria-hidden="true">+</span><span class="look-name">Save look</span>';
+  add.addEventListener('click', () => startNaming(add));
+  const addTile = document.createElement('div');
+  addTile.className = 'look-tile';
+  addTile.append(add);
+  looksEl.append(addTile);
+  // Size each preview rail's break to its handle.
+  for (const stage of looksEl.querySelectorAll('.look-stage')) {
+    const handle = stage.querySelector('.look-handle');
+    stage.querySelector('.look-rail').style.setProperty('--gap', `${Math.ceil(handle.offsetHeight / 2) + 6}px`);
+  }
+  if (focused) (looksEl.querySelector(`[data-id="${focused}"]`) || options[0]).focus();
+}
+
+// The Save look tile becomes a name field: Enter saves, Escape or clicking away cancels.
+function startNaming(add) {
+  namingLook = true;
+  const form = document.createElement('form');
+  form.className = 'look look-new naming';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.maxLength = 24;
+  input.spellcheck = false;
+  input.setAttribute('aria-label', 'Name for the new look');
+  input.value = `My look ${savedLooks().length + 1}`;
+  const hint = document.createElement('span');
+  hint.className = 'look-hint';
+  hint.textContent = 'Enter to save';
+  form.append(input, hint);
+  add.replaceWith(form);
+  input.select();
+  const finish = (keep) => {
+    if (!namingLook) return;
+    namingLook = false;
+    const name = input.value.trim();
+    if (keep && name) {
+      const look = { id: `look-${Date.now().toString(36)}`, name, values: pickLook(current) };
+      saveLooks([...savedLooks(), look]);
+    }
+    renderLooks(current);
+    const tile = looksEl.querySelector(keep && name ? '.look[aria-checked="true"]' : '[data-id="new"]');
+    if (tile) tile.focus();
+  };
+  form.addEventListener('submit', (e) => {
+    e.preventDefault();
+    finish(true);
+  });
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      e.preventDefault();
+      e.stopPropagation();
+      finish(false);
+    }
+  });
+  input.addEventListener('blur', () => finish(false));
+}
+
 function render(values) {
   current = values;
   repoRow.hidden = !tabRepo;
@@ -316,6 +523,7 @@ function render(values) {
   widthEl.textContent = custom ? `${values.width}px` : 'Default';
   resetEl.hidden = !custom;
   for (const update of pickers) update(values);
+  renderLooks(values);
 
   // Frame previews show the chosen handle graphic.
   const svg = HANDLES.find((h) => h.id === values.handle).svg;

@@ -42,8 +42,8 @@
     { id: 'dots-353', name: 'Dots (3-5-3)', svg: dots([3, 5, 3]) },
     { id: 'dots-3x5', name: 'Dot grid (3×5)', svg: dots([5, 5, 5]) },
     { id: 'staggered', name: 'Staggered dots', svg: staggered(5) },
-    { id: 'ridges-4', name: 'Ridges (4, wide)', svg: bars(4, 5) },
-    { id: 'ridges', name: 'Ridges (5)', svg: bars(5, 3) },
+    { id: 'ridges-4', name: 'Ridges (4)', svg: bars(4, 5) },
+    { id: 'ridges', name: 'Ridges (5)', svg: bars(5, 5) },
     {
       id: 'arrows',
       name: 'Arrows',
