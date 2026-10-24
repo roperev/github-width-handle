@@ -548,7 +548,15 @@ let colors = await colorsOf();
 check('popup: picking colors updates the handle and rail live',
   colors.bar !== defaultColors.bar && colors.bar === 'rgb(63, 185, 80)' && colors.railImage !== defaultColors.railImage,
   JSON.stringify(colors));
-check('rail: picked colors are bolder (~50%), default Blue stays subtle', /50%/.test(colors.railImage) || /0\.5\)/.test(colors.railImage), colors.railImage);
+check('rail: Red stays boosted (~50%)', /50%/.test(colors.railImage) || /0\.5\)/.test(colors.railImage), colors.railImage);
+for (const id of ['gray', 'white', 'black']) {
+  await pop.locator(`#rail-colors [data-id="${id}"]`).click();
+  await dark.page.waitForTimeout(300);
+  const image = (await colorsOf()).railImage;
+  check(`rail: ${id} stays subtle (~10%)`, /10%/.test(image) || /0\.1\)/.test(image), image);
+}
+await pop.locator('#rail-colors [data-id="red"]').click();
+await dark.page.waitForTimeout(300);
 const frameBorder = () => dark.page.evaluate(() => getComputedStyle(document.querySelector('.gwh-bar')).borderTopColor);
 await pop.locator('#frames [data-id="square"]').click();
 await dark.page.waitForTimeout(300);
