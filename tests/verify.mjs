@@ -54,6 +54,94 @@ const { context, page, extId } = await launch({ headless });
 await context.addInitScript(FRAME_LOGGER);
 const DEFAULT = 1280;
 
+if (process.argv.includes('--overview-fixture')) {
+  await setStorage(context, extId, { enabled: true, width: null, position: 'dynamic' });
+  await page.route(`${REPO}/pull/2*`, (route) => route.fulfill({
+    contentType: 'text/html',
+    body: `<!doctype html><html><head><style>
+      * { box-sizing: border-box; }
+      body { margin: 0; }
+      #diff-comparison-viewer-container { max-width: 1280px; margin: 32px auto; padding: 32px; }
+      .prc-PageLayout-PageLayoutContent-fixture { display: flex; gap: 48px; justify-content: center; }
+      [data-component="SplitPageLayout.Content"] { flex: 1; min-width: 0; max-width: 988px; }
+      .prc-PageLayout-Content-fixture { max-width: 1012px; }
+      [data-component="SplitPageLayout.Pane"] { flex: 0 0 320px; }
+      article { min-height: 1800px; border: 1px solid gray; }
+      h3 { margin: 0; }
+      @media (max-width: 767px) {
+        .prc-PageLayout-PageLayoutContent-fixture { flex-direction: column; }
+      }
+    </style></head><body><div id="diff-comparison-viewer-container">
+      <header>Pull request</header><div data-side-panel-open="false">
+        <div class="wrapper__fixture"><div class="prc-PageLayout-PageLayoutContent-fixture">
+          <div data-component="SplitPageLayout.Content"><div class="prc-PageLayout-Content-fixture"><article>Description</article></div></div>
+          <div data-component="SplitPageLayout.Pane"><div data-overview-sidebar-item><h3>Reviewers</h3></div></div>
+        </div></div>
+      </div>
+    </div></body></html>`,
+  }));
+  await open(page, `${REPO}/pull/2?overview=true`);
+  const overviewLayout = () => page.evaluate(() => {
+    const rect = (selector) => {
+      const bounds = document.querySelector(selector).getBoundingClientRect();
+      return { left: bounds.left, right: bounds.right, width: bounds.width };
+    };
+    return {
+      container: rect('#diff-comparison-viewer-container'),
+      main: rect('[data-component="SplitPageLayout.Content"]'),
+      body: rect('article'),
+      side: rect('[data-component="SplitPageLayout.Pane"]'),
+      overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
+    };
+  });
+  let initial = await overviewLayout();
+  let snapshot = await layout(page);
+  check('overview: detected, handle visible at default width', snapshot.page === 'pr-overview' && !!snapshot.ui && !snapshot.reset);
+  await dragHandle(page, 250);
+  let wide = await overviewLayout();
+  snapshot = await layout(page);
+  check('overview: drag widens symmetrically', near(initial.container.left - wide.container.left, 250) && near(wide.container.right - initial.container.right, 250));
+  check('overview: visible content grows with its container', near(wide.body.width - initial.body.width, 500) && near(wide.body.right, wide.main.right));
+  check('overview: sidebar fixed, no overlap or overflow', near(wide.side.width, initial.side.width) && wide.main.right < wide.side.left && !wide.overflow);
+  check('overview: handle remains in gutter', !!snapshot.ui && snapshot.ui.left >= wide.main.right && snapshot.ui.left + snapshot.ui.width <= wide.side.left);
+  await page.locator('.gwh-handle').focus();
+  await page.keyboard.press('ArrowRight');
+  check('overview: keyboard widens by 40px', near((await overviewLayout()).container.width, wide.container.width + 40));
+  await page.locator('.gwh-reset').click();
+  await page.waitForTimeout(700);
+  check('overview: reset restores native width', near((await overviewLayout()).container.width, initial.container.width) && !(await layout(page)).sized);
+  await dragHandle(page, 200);
+  await open(page, `${REPO}/pull/2?overview=true`);
+  check('overview: saved width restored on reload', near((await overviewLayout()).container.width, DEFAULT + 400) && !!(await layout(page)).ui);
+  await page.mouse.wheel(0, 1000);
+  await page.waitForTimeout(400);
+  check('overview: handle docks on scroll', (await layout(page)).ui?.position === 'fixed');
+  await page.evaluate(() => {
+    history.pushState({}, '', location.pathname);
+    document.querySelector('[data-side-panel-open]').removeAttribute('data-side-panel-open');
+    document.querySelector('[data-component="SplitPageLayout.Content"]').classList.add('js-pull-discussion-timeline');
+    document.querySelector('[data-component="SplitPageLayout.Pane"]').id = 'pr-conversation-sidebar';
+    const wrapper = document.querySelector('.wrapper__fixture');
+    wrapper.replaceWith(wrapper.cloneNode(true));
+  });
+  await page.waitForTimeout(100);
+  check('overview: same-path switch to classic retains handle', (await layout(page)).page === 'pr' && !!(await layout(page)).ui);
+  await page.evaluate(() => {
+    history.pushState({}, '', '?overview=true');
+    const wrapper = document.querySelector('.wrapper__fixture');
+    wrapper.parentElement.setAttribute('data-side-panel-open', 'false');
+    wrapper.querySelector('.js-pull-discussion-timeline').classList.remove('js-pull-discussion-timeline');
+    wrapper.replaceWith(wrapper.cloneNode(true));
+  });
+  await page.waitForTimeout(100);
+  check('overview: same-path switch back retains handle', (await layout(page)).page === 'pr-overview' && !!(await layout(page)).ui);
+  await page.setViewportSize({ width: 600, height: 900 });
+  await page.waitForTimeout(100);
+  check('overview: stacked mobile sidebar hides handle', !(await layout(page)).ui);
+  await context.close();
+  process.exit(failures ? 1 : 0);
+}
+
 // ---------- Issue: default state + drag ----------
 await setStorage(context, extId, { enabled: true, width: null, position: 'dynamic' });
 await open(page, `${REPO}/issues/1`);
