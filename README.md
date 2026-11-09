@@ -155,9 +155,11 @@ The palettes are in [`src/handles.js`](src/handles.js).
 | Applies to | Untouched |
 | --- | --- |
 | Issue detail (`/issues/123`) | Issue / PR lists |
-| PR Conversation (`/pull/123`) | PR Checks, Files changed, single commits |
+| PR Conversation and Overview (`/pull/123`, including `?overview=true`) | PR Checks, Files changed, single commits |
 | PR Commits (`/pull/123/commits`) | Code, Actions, Projects, etc. |
 | Discussion detail (`/discussions/123`) | Discussion lists |
+
+**New in 3.0:** GitHub's PR Overview mode is supported, including centered resizing, a fixed-width sidebar, keyboard controls, reset, and switching between Conversation and Overview without losing the handle.
 
 ## Install (unpacked)
 
