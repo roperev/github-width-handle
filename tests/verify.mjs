@@ -61,7 +61,8 @@ if (process.argv.includes('--overview-fixture')) {
     body: `<!doctype html><html><head><style>
       * { box-sizing: border-box; }
       body { margin: 0; }
-      #diff-comparison-viewer-container { max-width: 1280px; margin: 32px auto; padding: 32px; }
+      #diff-comparison-viewer-container { margin: 32px auto; padding: 32px; }
+      [data-component="PageHeader"] { max-width: 1356px; margin-inline: auto; }
       .prc-PageLayout-PageLayoutContent-fixture { display: flex; gap: 48px; justify-content: center; }
       [data-component="SplitPageLayout.Content"] { flex: 1; min-width: 0; max-width: 988px; }
       .prc-PageLayout-Content-fixture { max-width: 1012px; }
@@ -72,7 +73,7 @@ if (process.argv.includes('--overview-fixture')) {
         .prc-PageLayout-PageLayoutContent-fixture { flex-direction: column; }
       }
     </style></head><body><div id="diff-comparison-viewer-container">
-      <header>Pull request</header><div data-side-panel-open="false">
+      <div data-side-panel-open="false"><header data-component="PageHeader">Pull request</header></div><div data-side-panel-open="false">
         <div class="wrapper__fixture"><div class="prc-PageLayout-PageLayoutContent-fixture">
           <div data-component="SplitPageLayout.Content"><div class="prc-PageLayout-Content-fixture"><article>Description</article></div></div>
           <div data-component="SplitPageLayout.Pane"><div data-overview-sidebar-item><h3>Reviewers</h3></div></div>
@@ -90,6 +91,7 @@ if (process.argv.includes('--overview-fixture')) {
       container: rect('#diff-comparison-viewer-container'),
       main: rect('[data-component="SplitPageLayout.Content"]'),
       body: rect('article'),
+      header: rect('[data-component="PageHeader"]'),
       side: rect('[data-component="SplitPageLayout.Pane"]'),
       overflow: document.documentElement.scrollWidth > document.documentElement.clientWidth,
     };
@@ -102,6 +104,7 @@ if (process.argv.includes('--overview-fixture')) {
   snapshot = await layout(page);
   check('overview: drag widens symmetrically', near(initial.container.left - wide.container.left, 250) && near(wide.container.right - initial.container.right, 250));
   check('overview: visible content grows with its container', near(wide.body.width - initial.body.width, 500) && near(wide.body.right, wide.main.right));
+  check('overview: header stays aligned with content columns', near(wide.header.left, wide.main.left) && near(wide.header.right, wide.side.right));
   check('overview: sidebar fixed, no overlap or overflow', near(wide.side.width, initial.side.width) && wide.main.right < wide.side.left && !wide.overflow);
   check('overview: handle remains in gutter', !!snapshot.ui && snapshot.ui.left >= wide.main.right && snapshot.ui.left + snapshot.ui.width <= wide.side.left);
   await page.locator('.gwh-handle').focus();
@@ -112,13 +115,13 @@ if (process.argv.includes('--overview-fixture')) {
   check('overview: reset restores native width', near((await overviewLayout()).container.width, initial.container.width) && !(await layout(page)).sized);
   await dragHandle(page, 200);
   await open(page, `${REPO}/pull/2?overview=true`);
-  check('overview: saved width restored on reload', near((await overviewLayout()).container.width, DEFAULT + 400) && !!(await layout(page)).ui);
+  check('overview: saved width restored on reload', near((await overviewLayout()).container.width, initial.container.width + 400) && !!(await layout(page)).ui);
   await page.mouse.wheel(0, 1000);
   await page.waitForTimeout(400);
   check('overview: handle docks on scroll', (await layout(page)).ui?.position === 'fixed');
   await page.evaluate(() => {
     history.pushState({}, '', location.pathname);
-    document.querySelector('[data-side-panel-open]').removeAttribute('data-side-panel-open');
+    document.querySelector('.wrapper__fixture').parentElement.removeAttribute('data-side-panel-open');
     document.querySelector('[data-component="SplitPageLayout.Content"]').classList.add('js-pull-discussion-timeline');
     document.querySelector('[data-component="SplitPageLayout.Pane"]').id = 'pr-conversation-sidebar';
     const wrapper = document.querySelector('.wrapper__fixture');

@@ -21,6 +21,11 @@ html[data-gwh-sized][data-gwh-page="pr"] #diff-comparison-viewer-container [clas
   max-width: none !important;
 }
 
+html[data-gwh-page="pr-overview"] #diff-comparison-viewer-container {
+  max-width: calc(var(--breakpoint-large, 1012px) - 24px + 320px + 48px + 64px);
+  margin-inline: auto;
+}
+
 html[data-gwh-sized][data-gwh-page="pr-overview"] #diff-comparison-viewer-container,
 html[data-gwh-sized][data-gwh-page="pr-overview"] #diff-comparison-viewer-container .container-xl,
 html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [class*="wrapper__"] {
@@ -28,6 +33,7 @@ html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [clas
   margin-inline: auto !important;
 }
 
+html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [data-component="PageHeader"],
 html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [class*="wrapper__"] [data-component="SplitPageLayout.Content"],
 html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [class*="wrapper__"] [class*="prc-PageLayout-Content-"] {
   max-width: none !important;
