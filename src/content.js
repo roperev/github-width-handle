@@ -26,6 +26,16 @@
       anchor: '[data-testid="issue-body"]',
     },
     {
+      id: 'pr-overview',
+      path: /^\/[^/]+\/[^/]+\/pull\/\d+\/?$/,
+      detect: '[data-side-panel-open] > [class*="wrapper__"]:not(:has(.js-pull-discussion-timeline))',
+      container: '#diff-comparison-viewer-container',
+      main: '[data-side-panel-open] > [class*="wrapper__"] [data-component="SplitPageLayout.Content"]',
+      side: '[data-side-panel-open] > [class*="wrapper__"] [data-component="SplitPageLayout.Pane"]',
+      sideText: '[data-overview-sidebar-item] h3',
+      anchor: '[data-side-panel-open] > [class*="wrapper__"] [data-component="SplitPageLayout.Content"]',
+    },
+    {
       id: 'pr',
       path: /^\/[^/]+\/[^/]+\/pull\/\d+\/?$/,
       container: '#diff-comparison-viewer-container',
@@ -124,7 +134,7 @@
   // ---------- route + root attributes ----------
 
   function matchPage() {
-    return PAGES.find((p) => p.path.test(location.pathname)) || null;
+    return PAGES.find((p) => p.path.test(location.pathname) && (!p.detect || q(p.detect))) || null;
   }
 
   function setWidthVar(px) {
@@ -158,8 +168,9 @@
   }
 
   function checkRoute() {
-    if (location.pathname === lastPath) return;
-    lastPath = location.pathname;
+    const route = location.pathname + location.search;
+    if (route === lastPath && page === (state.enabled ? matchPage() : null)) return;
+    lastPath = route;
     endCache = null;
     const nextRepo = repoOf(location.pathname);
     if (nextRepo !== repo) {
@@ -729,7 +740,7 @@
   // ---------- boot ----------
 
   // Runs at document_start: apply the cached width before GitHub paints anything.
-  lastPath = location.pathname;
+  lastPath = location.pathname + location.search;
   applyColors();
   applyRoot();
   initStorage();

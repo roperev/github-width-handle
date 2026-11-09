@@ -144,7 +144,7 @@ The handle and the rail each take one of eight presets: Gray, White, Black, Blue
 The ninth, rainbow swatch is **Custom**. It opens a small picker with a saturation/brightness square, a hue slider, an alpha slider and a hex field (`#rgb`, `#rrggbb` or `#rrggbbaa`). The page updates live as you drag, and the color is saved when you let go or close the picker (<kbd>Esc</kbd>, **Done**, or a click outside). Custom colors are the same in light and dark mode.
 
 - The default handle color is **Gray**, which turns blue on hover. Other colors keep their color on hover.
-- The default rail color is **Blue**, a subtle match for GitHub's highlighted comment headers. The other rail colors are bolder (about 50% strength at rest) so a chosen color stands out. Use Custom if you want a different strength.
+- The default rail color is **Blue**, a subtle match for GitHub's highlighted comment headers. **Gray, White and Black** are also subtle (10% strength at rest, 40% on hover). **Green, Yellow, Orange and Red** are bolder (50% at rest, 80% on hover). Use Custom if you want a different strength.
 - **Hide** stops a part from being drawn. A hidden handle still works: hover the gap and drag as usual.
 - **Stealth mode:** hide both the handle and the rail, and the × is hidden too, so nothing from the extension is visible. Hovering anywhere along the rail's path, or focusing the handle with the keyboard, shows the handle, the rail in the default blue, and the × so you can find it, drag or reset.
 

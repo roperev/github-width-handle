@@ -21,6 +21,25 @@ html[data-gwh-sized][data-gwh-page="pr"] #diff-comparison-viewer-container [clas
   max-width: none !important;
 }
 
+html[data-gwh-page="pr-overview"] #diff-comparison-viewer-container {
+  max-width: calc(var(--breakpoint-large, 1012px) - 24px + 320px + 48px + 64px);
+  margin-inline: auto;
+}
+
+html[data-gwh-sized][data-gwh-page="pr-overview"] #diff-comparison-viewer-container,
+html[data-gwh-sized][data-gwh-page="pr-overview"] #diff-comparison-viewer-container .container-xl,
+html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [class*="wrapper__"] {
+  max-width: var(--gwh-width) !important;
+  margin-inline: auto !important;
+}
+
+html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [data-component="PageHeader"],
+html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [class*="wrapper__"] [data-component="SplitPageLayout.Content"],
+html[data-gwh-sized][data-gwh-page="pr-overview"] [data-side-panel-open] > [class*="wrapper__"] [class*="prc-PageLayout-Content-"] {
+  max-width: none !important;
+  min-width: 0 !important;
+}
+
 /* Discussions use percentage columns; keep the sidebar fixed so only the main column grows. */
 @media (min-width: 768px) {
   html[data-gwh-sized][data-gwh-page="discussion"] #discussion_bucket > .col-md-9 {
@@ -40,6 +59,8 @@ html[data-gwh-sized][data-gwh-page="pr"] #diff-comparison-viewer-container [clas
 /* Eased width change for widths applied after content is visible, and for resets. */
 html[data-gwh-animate][data-gwh-page="issue"] [class*="issueViewerContainer"] [class*="contentContainer__"],
 html[data-gwh-animate][data-gwh-page="pr"] #diff-comparison-viewer-container,
+html[data-gwh-animate][data-gwh-page="pr-overview"] [data-side-panel-open] > [class*="wrapper__"],
+html[data-gwh-animate][data-gwh-page="pr-overview"] #diff-comparison-viewer-container,
 html[data-gwh-animate][data-gwh-page="pr-commits"] #diff-comparison-viewer-container,
 html[data-gwh-animate][data-gwh-page="discussion"] .new-discussion-timeline {
   transition: max-width 0.5s ease !important;

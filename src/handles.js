@@ -95,13 +95,15 @@
 
   // Rail: `peak` beside the handle at rest, `hover` while hovering/dragging. Fades to transparent.
   // Same order as the handle colors. Blue (the default) matches GitHub's highlighted comment headers;
-  // picked colors are bolder (about 50% at rest).
+  // neutrals stay subtle too; green, yellow, orange and red are bolder (50% at rest).
   const mix = (color, pct) => `color-mix(in srgb, ${color} ${pct}%, transparent)`;
-  const railColor = (id, name, color, light, dark) => ({ id, name, peak: mix(color, 50), hover: mix(color, 80), light, dark });
+  const railColor = (id, name, color, light, dark, subtle = false) => ({
+    id, name, peak: mix(color, subtle ? 10 : 50), hover: mix(color, subtle ? 40 : 80), light, dark,
+  });
   const RAIL_COLORS = [
-    railColor('gray', 'Gray', 'var(--fgColor-muted, #59636e)', '#59636e', '#9198a1'),
-    railColor('white', 'White', '#ffffff', '#ffffff', '#ffffff'),
-    railColor('black', 'Black', '#000000', '#000000', '#000000'),
+    railColor('gray', 'Gray', 'var(--fgColor-muted, #59636e)', '#59636e', '#9198a1', true),
+    railColor('white', 'White', '#ffffff', '#ffffff', '#ffffff', true),
+    railColor('black', 'Black', '#000000', '#000000', '#000000', true),
     { id: 'blue', name: 'Blue', peak: 'var(--bgColor-accent-muted, #388bfd1a)', hover: 'var(--borderColor-accent-muted, #388bfd66)', light: '#0969da', dark: '#4493f8' },
     railColor('green', 'Green', 'var(--fgColor-success, #1a7f37)', '#1a7f37', '#3fb950'),
     railColor('yellow', 'Yellow', YELLOW, YELLOW_LIGHT, YELLOW_DARK),
